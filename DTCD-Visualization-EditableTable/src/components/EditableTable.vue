@@ -181,8 +181,8 @@ export default {
         // pagination
         pagination:"local",
         paginationSize:true,
-        // paginationSizeSelector:[100, 500, 1000, true],
-        paginationSizeSelector:[1, 2, 3, true],
+        paginationSizeSelector:[100, 500, 1000, true],
+        // paginationSizeSelector:[1, 2, 3, true],
         paginationCounter:"rows",
 
         // movableColumns:true,
