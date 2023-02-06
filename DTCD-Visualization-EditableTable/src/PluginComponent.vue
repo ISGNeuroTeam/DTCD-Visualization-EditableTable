@@ -106,8 +106,6 @@ export default {
       },[])
       if (!hasServiceFields  && !!this.columnOptionsFromConfig) {
         this.columnOptions = this.columnOptionsFromConfig
-      } else {
-        this.columnOptions = null
       }
     },
 
