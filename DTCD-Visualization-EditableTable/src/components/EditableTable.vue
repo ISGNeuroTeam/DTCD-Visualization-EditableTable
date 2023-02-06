@@ -72,8 +72,7 @@ export default {
       //   {field: "color", title: "Цвет", formatter: "color",editor: "input",},
       //   {field: "img", title: "image", formatter: "image",editor: "input",},
       // ]
-      if (!Object.keys(this.schema).includes('_columnOptions')) {
-        console.log('this.schema');
+      if (!Object.keys(this.schema).includes('_columnOptions') && !this.columnOptions) {
         return Object.keys(this.schema).reduce((acc, key) => {
           const column = {
             field: key,
