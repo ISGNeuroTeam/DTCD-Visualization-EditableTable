@@ -30,6 +30,7 @@ export default {
     columnOptionsFromConfig: null,
     dataset: [],
     title: '',
+    titleFromConfig: '',
     hiddenColumns: [
       'metadata',
     ],
@@ -53,7 +54,7 @@ export default {
       this.id = id;
     },
     setTitle(value = '') {
-      this.title = value;
+      this.titleFromConfig = value;
     },
     setColumnOptions(val) {
       if (val.length > 0) {
@@ -136,7 +137,7 @@ export default {
         }
       }
       return null;
-    }
+    },
   },
 };
 </script>
