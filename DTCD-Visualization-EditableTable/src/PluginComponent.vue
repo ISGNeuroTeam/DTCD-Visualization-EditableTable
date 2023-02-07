@@ -5,7 +5,7 @@
       :schema="schema"
       :id="id"
       :columnOptions="columnOptions"
-      :title="title"
+      :title="getTitle"
     />
   </div>
 </template>
@@ -47,7 +47,9 @@ export default {
       return Object.keys(this.dataset[0])
         .filter((name) => !this.hiddenColumns.includes(name))
     },
-
+    getTitle() {
+      return this.titleFromConfig || this.title
+    }
   },
   methods: {
     setId(id) {
@@ -60,7 +62,6 @@ export default {
       if (val.length > 0) {
         try {
           const columnOptions = JSON?.parse(val.replaceAll("'", '"'))
-
           if (Object.keys(columnOptions).length > 0) {
             this.columnOptionsFromConfig = columnOptions
             return
@@ -89,8 +90,10 @@ export default {
 
     setDataset(data = []) {
       this.columnOptions = {}
+      let hasServiceFields = false
       this.dataset = data.reduce((acc, item) => {
         if (!!(this.isServiceFields(item))) {
+          hasServiceFields = true
           if (!this.columnOptionsFromConfig) {
             this.title = this.titleFromConfig || item?._header || ''
             this.columnOptions = item?._columnOptions ? JSON?.parse(item?._columnOptions?.replaceAll("'", '"')) : {};
@@ -104,6 +107,9 @@ export default {
 
         return acc
       },[])
+      if (!hasServiceFields  && !!this.columnOptionsFromConfig) {
+        this.columnOptions = this.columnOptionsFromConfig
+      }
     },
 
     /**
