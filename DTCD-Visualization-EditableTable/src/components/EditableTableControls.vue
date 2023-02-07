@@ -21,7 +21,10 @@
 
     <span class="ButtonsSeparator"></span>
 
-    <base-dropdown class="GraphListDropDownWrapper">
+    <base-dropdown
+      v-if="false"
+      class="listDropDownWrapper"
+    >
       <div slot="toggle-btn">
         <base-tooltip content="Load from local file" placement="bottom" >
           <base-icon-button>
@@ -63,7 +66,7 @@
       <span slot="icon-arrow"/>
     </base-dropdown>
 
-    <base-dropdown class="GraphListDropDownWrapper">
+    <base-dropdown class="listDropDownWrapper">
       <div slot="toggle-btn">
         <base-tooltip content="Download file" placement="bottom" >
           <base-icon-button>
