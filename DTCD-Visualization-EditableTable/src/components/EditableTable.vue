@@ -311,7 +311,6 @@ export default {
    },*/
 
     writeData() {
-      console.log(structuredClone(this.tableData));
       this.$root.writeData(structuredClone(this.tableData));
     },
 
