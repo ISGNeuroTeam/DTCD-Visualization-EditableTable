@@ -5,7 +5,7 @@
       :schema="schema"
       :id="id"
       :columnOptions="columnOptions"
-      :title="title"
+      :title="getTitle"
     />
   </div>
 </template>
@@ -30,6 +30,7 @@ export default {
     columnOptionsFromConfig: null,
     dataset: [],
     title: '',
+    titleFromConfig: '',
     hiddenColumns: [
       'metadata',
     ],
@@ -46,14 +47,16 @@ export default {
       return Object.keys(this.dataset[0])
         .filter((name) => !this.hiddenColumns.includes(name))
     },
-
+    getTitle() {
+      return this.titleFromConfig || this.title
+    }
   },
   methods: {
     setId(id) {
       this.id = id;
     },
     setTitle(value = '') {
-      this.title = value;
+      this.titleFromConfig = value;
     },
     setColumnOptions(val) {
       if (val.length > 0) {
