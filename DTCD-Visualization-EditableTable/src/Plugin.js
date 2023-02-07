@@ -1,6 +1,8 @@
 import pluginMeta from './Plugin.Meta';
 import PluginComponent from './PluginComponent.vue';
 
+import vClickOutside from 'v-click-outside'
+
 import {
   PanelPlugin,
   LogSystemAdapter,
@@ -29,6 +31,7 @@ export class VisualizationTable extends PanelPlugin {
     ...this.defaultConfig,
     columnOptions: "{}",
     dataSource: '',
+    writeTokenName: ''
   }
 
   static getRegistrationMeta() {
@@ -64,6 +67,8 @@ export class VisualizationTable extends PanelPlugin {
   createVueInstance() {
     const { default: VueJS } = this.getDependence('Vue');
 
+    VueJS.use(vClickOutside)
+
     const selector = this.#selector
 
     this.#vue = new VueJS({
@@ -73,6 +78,9 @@ export class VisualizationTable extends PanelPlugin {
       methods: {
         publishEventClicked: (value) => {
           this.#eventSystem.publishEvent('Clicked', value);
+        },
+        writeData: (dataset) => {
+          this.writeData(dataset)
         }
       },
     })
@@ -120,9 +128,9 @@ export class VisualizationTable extends PanelPlugin {
     for (const [prop, value] of Object.entries(config)) {
       if (!configProps.includes(prop)) continue;
 
-      if (prop !== 'dataSource') {
+      if (prop !== 'dataSource' && prop !== 'writeTokenName') {
         this.setVueComponentPropValue(prop, value)
-      } else if (value) {
+      } else if (prop === 'dataSource' && value) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
               `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
@@ -221,6 +229,14 @@ export class VisualizationTable extends PanelPlugin {
             propValue: '{}',
           },
         },
+        {
+          component: 'text',
+          propName: 'writeTokenName',
+          attrs: {
+            label: 'Имя токена для записи',
+            propValue: '',
+          },
+        },
       ],
     };
   }
@@ -245,5 +261,14 @@ export class VisualizationTable extends PanelPlugin {
       if (!vueNamesFields.includes(prop)) continue;
       this.#vueComponent[prop] = value;
     }
+  }
+
+
+
+  writeData(dataset) {
+    const dsName = this.#config?.dataSource
+    if (!dsName) return
+    // TODO: добавить метод в адаптер
+    this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 }
