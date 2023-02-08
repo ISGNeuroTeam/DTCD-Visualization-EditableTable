@@ -229,14 +229,6 @@ export class VisualizationTable extends PanelPlugin {
             propValue: '{}',
           },
         },
-        {
-          component: 'text',
-          propName: 'writeTokenName',
-          attrs: {
-            label: 'Имя токена для записи',
-            propValue: '',
-          },
-        },
       ],
     };
   }

@@ -109,13 +109,13 @@
     </base-dropdown>
 
     <span class="ButtonsSeparator"></span>
-    <base-tooltip content="Delete selected rows" placement="bottom">
+    <base-tooltip content="Undo" placement="bottom">
       <base-icon-button @click="$emit('action', 'undo')">
         <span class="FontIcon name_undo"/>
       </base-icon-button>
     </base-tooltip>
 
-    <base-tooltip content="Delete selected rows" placement="bottom">
+    <base-tooltip content="Redo" placement="bottom">
       <base-icon-button @click="$emit('action', 'redo')">
         <span class="FontIcon name_redo"/>
       </base-icon-button>

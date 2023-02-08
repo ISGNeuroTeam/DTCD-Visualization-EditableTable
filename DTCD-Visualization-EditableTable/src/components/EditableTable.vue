@@ -80,11 +80,58 @@ export default {
       //   {field: "img", title: "image", formatter: "image",editor: "input",},
       // ]
       const defaultColumns = [
-        { title: 'Выделение', formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerHozAlign:"center", headerSort:false, cellClick:function(e, cell){
+        {
+          title: 'Выделение',
+          formatter: "rowSelection",
+          titleFormatter: "rowSelection",
+          width: 50,
+          hozAlign: "center",
+          headerHozAlign: "center",
+          headerSort: false,
+          cellClick: function (e, cell) {
             cell.getRow().toggleSelect();
-          }},
+          }
+        },
       ]
-      if (!Object.keys(this.schema).includes('_columnOptions')) {
+
+      if  (!!Object.keys(this.columnOptions).length) {
+      return Object.keys(this.columnOptions).reduce((acc, key) => {
+        const options = this.columnOptions[key]
+        const column = {
+          field: key,
+          title: options.title || key,
+          frozen: options?.frozen || false,
+          headerFilter: options?.headerFilter || false,
+          editor: options?.editor || false,
+          headerMenu: this.headerMenu
+
+        };
+
+        if (options?.formatter) {
+          if (options?.formatter === "color") {
+            column.formatter = colorFixed
+          } else {
+            column.formatter = options?.formatter
+          }
+        }
+        if (options?.formatter === "tickCross") {
+          column.headerFilterParams = {"tristate": true};
+          column.headerFilterEmptyCheck = function (value) {
+            return value === null
+          }
+        }
+        if (options?.editor === "list" && options?.editorParams) {
+          column.editorParams = options.editorParams
+        }
+
+        return [
+          ...acc,
+          column,
+        ]
+      }, defaultColumns);
+    }
+
+
         return Object.keys(this.schema).reduce((acc, key) => {
           const column = {
             field: key,
@@ -104,40 +151,7 @@ export default {
             column,
           ]
         },defaultColumns)
-      } else {
-        return Object.keys(this.columnOptions).reduce((acc, key) => {
-          const options = this.columnOptions[key]
-          const column = {
-            field: key,
-            title: options.title || key,
-            frozen: options?.frozen || false,
-            headerFilter: options?.headerFilter || false,
-            editor: options?.editor || false,
-            headerMenu: this.headerMenu
 
-          };
-
-          if (options?.formatter) {
-            if (options?.formatter === "color") {
-              column.formatter = colorFixed
-            } else {
-              column.formatter = options?.formatter
-            }
-          }
-          if (options?.formatter === "tickCross") {
-            column.headerFilterParams ={"tristate":true};
-            column.headerFilterEmptyCheck = function(value){return value === null}
-          }
-          if (options?.editor === "list" && options?.editorParams) {
-            column.editorParams = options.editorParams
-          }
-
-          return [
-            ...acc,
-            column,
-          ]
-        },defaultColumns);
-      }
 
     }
   },
@@ -369,7 +383,6 @@ export default {
       this.tabulator.import("csv", ".csv")
       .then(() => {
         this.tableData = this.tabulator.getData()
-        console.log(this.tableData);
         this.createTable()
         delete this.tabulator.importFormat
         this.isLoadFromFile = false

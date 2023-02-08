@@ -64,9 +64,10 @@ export default {
           const columnOptions = JSON?.parse(val.replaceAll("'", '"'))
           if (Object.keys(columnOptions).length > 0) {
             this.columnOptionsFromConfig = columnOptions
-            return
+            return;
           }
         } catch (e) {
+          console.error('error')
         }
         
 
