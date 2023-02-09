@@ -405,7 +405,12 @@ export default {
 
     execute(action) {
       this[action]()
-    }
+    },
+    destroyTable() {
+      if (this.tabulator) {
+        this.tabulator.destroy()
+      }
+    },
   }
 };
 </script>

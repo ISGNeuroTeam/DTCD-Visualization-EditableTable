@@ -103,6 +103,7 @@ export class VisualizationTable extends PanelPlugin {
   }
 
   beforeUninstall() {
+    this.#vueComponent.destroyTable()
     this.#vue.$destroy();
     const newRootElement = document.createElement(`div`);
     newRootElement.id = this.#selector.replace('#', '')

@@ -1,6 +1,7 @@
 <template>
   <div class="VisualizationTable" style="height: 100%">
     <editable-table
+      ref="editableTableComponent"
       :dataset="dataset"
       :schema="schema"
       :id="id"
@@ -145,6 +146,9 @@ export default {
       }
       return null;
     },
+    destroyTable() {
+      this.$refs.editableTableComponent.destroyTable()
+    }
   },
 };
 </script>
