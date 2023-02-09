@@ -103,8 +103,8 @@ export default {
           frozen: options?.frozen || false,
           headerFilter: options?.headerFilter || false,
           editor: options?.editor || false,
-          headerMenu: this.headerMenu
-
+          headerMenu: this.headerMenu,
+          cellClick: this.cellClickEvent
         };
 
         if (options?.formatter) {
@@ -132,25 +132,25 @@ export default {
     }
 
 
-        return Object.keys(this.schema).reduce((acc, key) => {
-          const column = {
-            field: key,
-            title: key,
-            editor: this.schema[key] === 'BOOLEAN'? "tickCross" : true,
-            headerFilter: this.schema[key] === 'BOOLEAN'? "tickCross" : "input",
-            headerMenu: this.headerMenu
-
-          };
-          if (this.schema[key] === 'BOOLEAN') {
-            column.formatter = "tickCross";
-            column.headerFilterParams ={"tristate":true};
-            column.headerFilterEmptyCheck = function(value){return value === null}
-          }
-          return [
-            ...acc,
-            column,
-          ]
-        },defaultColumns)
+      return Object.keys(this.schema).reduce((acc, key) => {
+        const column = {
+          field: key,
+          title: key,
+          editor: this.schema[key] === 'BOOLEAN'? "tickCross" : true,
+          headerFilter: this.schema[key] === 'BOOLEAN'? "tickCross" : "input",
+          headerMenu: this.headerMenu,
+          cellClick:this.cellClickEvent,
+       };
+        if (this.schema[key] === 'BOOLEAN') {
+          column.formatter = "tickCross";
+          column.headerFilterParams ={"tristate":true};
+          column.headerFilterEmptyCheck = function(value){return value === null}
+        }
+        return [
+          ...acc,
+          column,
+        ]
+      },defaultColumns)
 
 
     }
@@ -179,7 +179,7 @@ export default {
         popupContainer: '#page',
         maxHeight: "100%",
         height: "100%",
-        layout:"fitColumns",
+        layout:"fitDataFill",
 
         persistence: {
           columns: ["width", "visible"]
@@ -275,6 +275,15 @@ export default {
       }
 
       return menu;
+    },
+
+    cellClickEvent(e, {_cell: cell}){
+      if (e instanceof FocusEvent) {
+        const column = cell.column.field;
+        const value = cell.value;
+        const row = cell.row.position;
+        this.$emit('cellClick', {row, column, value})
+      }
     },
     /*dateEditor(cell, onRendered, success, cancel){
      //cell - the cell component for the editable cell

@@ -7,6 +7,7 @@
       :id="id"
       :columnOptions="columnOptions"
       :title="getTitle"
+      @cellClick="this.$root.publishEventClicked"
     />
   </div>
 </template>
