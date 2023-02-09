@@ -147,7 +147,7 @@ export default {
       return null;
     },
     destroyTable() {
-      this.$refs.editableTableComponent.destroyTable()
+      this.$refs.editableTableComponent?.destroyTable()
     }
   },
 };

@@ -107,8 +107,8 @@ export class VisualizationTable extends PanelPlugin {
     this.#vue.$destroy();
     const newRootElement = document.createElement(`div`);
     newRootElement.id = this.#selector.replace('#', '')
-    this.#vue.$el.parentElement.appendChild(newRootElement)
-    this.#vue.$el.parentNode.removeChild(this.#vue.$el);
+    this.#vue.$el.parentElement?.appendChild(newRootElement)
+    this.#vue.$el.parentNode?.removeChild(this.#vue.$el);
   }
 
   setVueComponentPropValue(prop, value) {
