@@ -20,12 +20,5 @@
     "type": "esm",
     "version": "3.5.20",
     "source": "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"
-  },
-  {
-    "name": "xlsx",
-    "fileName": "xlsx.js",
-    "type": "esm",
-    "version": "0.18.5",
-    "source": "https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"
   }
 ]

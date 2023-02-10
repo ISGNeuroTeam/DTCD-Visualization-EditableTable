@@ -16,11 +16,11 @@
   </div>
 </template>
 
+<script src="../js/xlsx.full.min"></script>
 <script>
 import {TabulatorFull as Tabulator} from 'tabulator-tables';
 import {throttle} from '../throttle';
 import EditableTableControls from './EditableTableControls';
-
 
 const colorFixed = function(cell, formatterParams, onRendered){
   cell.getElement().style.backgroundColor = this.sanitizeHTML(cell.getValue());
