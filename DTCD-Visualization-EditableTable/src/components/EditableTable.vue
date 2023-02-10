@@ -417,7 +417,6 @@ export default {
         this.tableData = []
       })
     },
-
     execute(action) {
       this[action]()
     },
