@@ -146,6 +146,7 @@ export default {
           headerMenu: this.headerMenu,
           cellClick:this.cellClickEvent,
        };
+
         if (this.schema[key] === 'BOOLEAN') {
           column.formatter = "tickCross";
           column.headerFilterParams ={"tristate":true};
