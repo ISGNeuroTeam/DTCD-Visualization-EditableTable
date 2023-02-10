@@ -143,6 +143,15 @@ export class VisualizationTable extends PanelPlugin {
               'processDataSourceEvent',
               { dataSource: this.#config[prop], status: 'success' },
           );
+
+          this.#eventSystem.unsubscribe(
+            this.#dataSourceSystemGUID,
+            'DataSourceWriteStatusUpdate',
+            this.#guid,
+            'processDataSourceWriteEvent',
+            { dataSource: this.#config[prop], status: 'new' },
+          );
+
         }
 
         const dsNewName = value;
@@ -160,6 +169,16 @@ export class VisualizationTable extends PanelPlugin {
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
+
+        if (ds.type === 'otlrw') {
+          this.#eventSystem.subscribe(
+            this.#dataSourceSystemGUID,
+            'DataSourceWriteStatusUpdate',
+            this.#guid,
+            'processDataSourceWriteEvent',
+            { dataSource: dsNewName, status: 'failed' },
+          );
+        }
 
         if (ds && ds.status === 'success') {
           const data = this.#storageSystem.session.getRecord(dsNewName);
@@ -195,6 +214,15 @@ export class VisualizationTable extends PanelPlugin {
     );
     this.loadSchema(schema);
     this.loadData(data);
+  }
+
+  processDataSourceWriteEvent({dataSource, status}) {
+    this.#vueComponent.setWriteStatus(status)
+
+    this.#logSystem.debug(
+      `${this.#id} process DataSourceWriteStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
+    );
+
   }
 
   setFormSettings(config) {
@@ -261,7 +289,6 @@ export class VisualizationTable extends PanelPlugin {
   writeData(dataset) {
     const dsName = this.#config?.dataSource
     if (!dsName) return
-    // TODO: добавить метод в адаптер
     this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 }

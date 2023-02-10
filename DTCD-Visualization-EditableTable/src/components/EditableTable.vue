@@ -6,6 +6,7 @@
       v-text="title"
     />
     <editable-table-controls
+      :writeStatus="writeStatus"
       @action="execute"
     />
 
@@ -57,7 +58,11 @@ export default {
     columnOptions: {
       type: Object,
       default: () => ({})
-    }
+    },
+    writeStatus: {
+      type: String,
+      default: ''
+    },
   },
   data: () => ({
     tabulator: null, //variable to hold your table
@@ -156,6 +161,9 @@ export default {
     }
   },
   watch: {
+    writeStatus(val) {
+      console.log('writeStatus watch', val);
+    },
     dataset: {
       handler(val) {
         this.tableData = structuredClone(val)
@@ -334,7 +342,7 @@ export default {
    },*/
 
     writeData() {
-      this.$root.writeData(structuredClone(this.tableData));
+      this.$root.writeData({data: structuredClone(this.tableData), schema: this.schema});
     },
 
     //undo button

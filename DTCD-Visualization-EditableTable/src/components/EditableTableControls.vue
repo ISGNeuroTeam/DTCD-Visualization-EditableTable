@@ -1,8 +1,12 @@
 <template>
   <div class="Buttons">
+
     <base-tooltip content="Write to server" placement="bottom">
       <base-icon-button @click="$emit('action', 'writeData')">
-        <span class="FontIcon name_cloudUp "/>
+        <span
+          class="FontIcon name_cloudUp"
+          :class="saveIcon"
+        />
       </base-icon-button>
     </base-tooltip>
 
@@ -128,6 +132,12 @@
 
 export default {
   name: 'EditableTableControls',
+  props: {
+    writeStatus: {
+      type: String,
+      default: ''
+    }
+  },
   data: () => ({
     downloadListIsActive: false,
     downloadFiles: {
@@ -141,9 +151,20 @@ export default {
     loadFiles: {
       loadCSV: 'CSV',
       loadJSON: 'JSON',
-    }
+    },
   }),
   computed: {
+    saveIcon() {
+      console.log('saveIcon', this.writeStatus);
+      if (this.writeStatus === 'run') {
+        return 'name_loader'
+      }
+      if (this.writeStatus === 'done') {
+        return 'name_downloadDone'
+      }
+      return 'name_save'
+
+    },
     loadArrowIcon() {
       if (this.loadListIsActive) {
         return 'FontIcon name_chevronDown rotate_180';
