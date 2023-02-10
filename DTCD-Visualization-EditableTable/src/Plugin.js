@@ -225,6 +225,10 @@ export class VisualizationTable extends PanelPlugin {
 
   }
 
+  getDatasetFromTable() {
+    return this.#vueComponent.$refs.editableTableComponent.getDataFromTable()
+  }
+
   setFormSettings(config) {
     return this.setPluginConfig(config);
   }

@@ -421,6 +421,9 @@ export default {
     execute(action) {
       this[action]()
     },
+    getDataFromTable() {
+      return this.tabulator.getData()
+    },
     destroyTable() {
       if (this.tabulator) {
         this.tabulator.destroy()
