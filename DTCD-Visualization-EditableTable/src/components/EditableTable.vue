@@ -162,9 +162,6 @@ export default {
     }
   },
   watch: {
-    writeStatus(val) {
-      console.log('writeStatus watch', val);
-    },
     dataset: {
       handler(val) {
         this.tableData = structuredClone(val)

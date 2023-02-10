@@ -159,8 +159,6 @@ export default {
       } else {
         this.writeStatus = ''
       }
-      console.log('status', status);
-      console.log('this.writeStatus', this.writeStatus);
     },
     destroyTable() {
       this.$refs.editableTableComponent?.destroyTable()

@@ -155,7 +155,6 @@ export default {
   }),
   computed: {
     saveIcon() {
-      console.log('saveIcon', this.writeStatus);
       if (this.writeStatus === 'run') {
         return 'name_loader'
       }
