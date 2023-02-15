@@ -5,24 +5,22 @@
       class="title"
       v-text="title"
     />
-<!--    <button @click="addDataRow">add</button>-->
-<!--    <button @click="removeDataRow">remove</button>-->
-<!--    <button @click="downloadCSV">downloadCSV</button>-->
-<!--    <button @click="downloadJSON">downloadJSON</button>-->
-<!--    <button @click="downloadXLSX">downloadXLSX</button>-->
-<!--    <button @click="downloadPDF">downloadPDF</button>-->
-<!--    <button @click="downloadHTML">downloadHTML</button>-->
-<!--    <button @click="undo">undo</button>-->
-<!--    <button @click="redo">redo</button>-->
-    <div style="height: calc(100% - 33px)">
+    <editable-table-controls
+      :writeStatus="writeStatus"
+      @action="execute"
+    />
+
+    <div :style="`height: ${tableHeight}`">
       <div class="editable-table" ref="table"></div>
     </div>
   </div>
 </template>
 
+<script src="../js/xlsx.full.min"></script>
 <script>
 import {TabulatorFull as Tabulator} from 'tabulator-tables';
 import {throttle} from '../throttle';
+import EditableTableControls from './EditableTableControls';
 
 const colorFixed = function(cell, formatterParams, onRendered){
   cell.getElement().style.backgroundColor = this.sanitizeHTML(cell.getValue());
@@ -32,6 +30,10 @@ const colorFixed = function(cell, formatterParams, onRendered){
 
 export default {
   name: 'editableTable',
+  components: {
+    EditableTableControls
+  },
+
   props: {
     title: {
       type: String,
@@ -56,13 +58,23 @@ export default {
     columnOptions: {
       type: Object,
       default: () => ({})
-    }
+    },
+    writeStatus: {
+      type: String,
+      default: ''
+    },
   },
   data: () => ({
     tabulator: null, //variable to hold your table
     tableData: [],
+    isLoadFromFile: false,
   }),
   computed: {
+    tableHeight() {
+      let offset = 38
+      offset += this.title ? 33 : 0
+      return  `calc(100% - ${offset}px)`
+    },
     columns() {
       // return [
       //   {field: "name", title: "Name", frozen: true, editor: "input", headerFilter:"input"},
@@ -72,60 +84,80 @@ export default {
       //   {field: "color", title: "Цвет", formatter: "color",editor: "input",},
       //   {field: "img", title: "image", formatter: "image",editor: "input",},
       // ]
-      if (!Object.keys(this.schema).includes('_columnOptions') && !this.columnOptions) {
-        return Object.keys(this.schema).reduce((acc, key) => {
-          const column = {
-            field: key,
-            title: key,
-            // editor: this.schema[key] === 'BOOLEAN'? "tickCross" : true,
-            headerFilter: this.schema[key] === 'BOOLEAN'? "tickCross" : "input",
-            headerMenu: this.headerMenu
-
-          };
-          if (this.schema[key] === 'BOOLEAN') {
-            column.formatter = "tickCross";
-            column.headerFilterParams ={"tristate":true};
-            column.headerFilterEmptyCheck = function(value){return value === null}
+      const defaultColumns = [
+        {
+          title: 'Выделение',
+          formatter: "rowSelection",
+          titleFormatter: "rowSelection",
+          width: 50,
+          hozAlign: "center",
+          headerHozAlign: "center",
+          headerSort: false,
+          cellClick: function (e, cell) {
+            cell.getRow().toggleSelect();
           }
-          return [
-            ...acc,
-            column,
-          ]
-        },[])
-      } else {
-        return Object.keys(this.columnOptions).reduce((acc, key) => {
-          const options = this.columnOptions[key]
-          const column = {
-            field: key,
-            title: options.title || key,
-            frozen: options?.frozen || false,
-            headerFilter: options?.headerFilter || false,
-            // editor: options?.editor || false,
-            headerMenu: this.headerMenu
+        },
+      ]
 
-          };
+      if  (!!Object.keys(this.columnOptions).length) {
+      return Object.keys(this.columnOptions).reduce((acc, key) => {
+        const options = this.columnOptions[key]
+        const column = {
+          field: key,
+          title: options.title || key,
+          frozen: options?.frozen || false,
+          headerFilter: options?.headerFilter || false,
+          editor: options?.editor || false,
+          headerMenu: this.headerMenu,
+          cellClick: this.cellClickEvent
+        };
 
-          if (options?.formatter) {
-            if (options?.formatter === "color") {
-              column.formatter = colorFixed
-            } else {
-              column.formatter = options?.formatter
-            }
+        if (options?.formatter) {
+          if (options?.formatter === "color") {
+            column.formatter = colorFixed
+          } else {
+            column.formatter = options?.formatter
           }
-          if (options?.formatter === "tickCross") {
-            column.headerFilterParams ={"tristate":true};
-            column.headerFilterEmptyCheck = function(value){return value === null}
+        }
+        if (options?.formatter === "tickCross") {
+          column.headerFilterParams = {"tristate": true};
+          column.headerFilterEmptyCheck = function (value) {
+            return value === null
           }
-          if (options?.editor === "list" && options?.editorParams) {
-            column.editorParams = options.editorParams
-          }
+        }
+        if (options?.editor === "list" && options?.editorParams) {
+          column.editorParams = options.editorParams
+        }
 
-          return [
-            ...acc,
-            column,
-          ]
-        },[]);
-      }
+        return [
+          ...acc,
+          column,
+        ]
+      }, defaultColumns);
+    }
+
+
+      return Object.keys(this.schema).reduce((acc, key) => {
+        const column = {
+          field: key,
+          title: key,
+          editor: this.schema[key] === 'BOOLEAN'? "tickCross" : true,
+          headerFilter: this.schema[key] === 'BOOLEAN'? "tickCross" : "input",
+          headerMenu: this.headerMenu,
+          cellClick:this.cellClickEvent,
+       };
+
+        if (this.schema[key] === 'BOOLEAN') {
+          column.formatter = "tickCross";
+          column.headerFilterParams ={"tristate":true};
+          column.headerFilterEmptyCheck = function(value){return value === null}
+        }
+        return [
+          ...acc,
+          column,
+        ]
+      },defaultColumns)
+
 
     }
   },
@@ -133,6 +165,7 @@ export default {
     dataset: {
       handler(val) {
         this.tableData = structuredClone(val)
+        this.isLoadFromFile = false
         this.createTable()
       },
       deep: true
@@ -147,44 +180,50 @@ export default {
         this.tabulator.destroy()
       }
       this.tabulator = new Tabulator(this.$refs.table, {
+        addRowPos: 'top',
+        placeholder:"No Data Available", //display message to user on empty table
         popupContainer: '#page',
         maxHeight: "100%",
         height: "100%",
-        layout:"fitColumns",
+        layout:"fitDataFill",
+
         persistence: {
           columns: ["width", "visible"]
         },
         persistenceID:this.id,
+
+
         // data: this.tableData, //link data to table
         data: this.tableData, //link data to table
         reactiveData:true, //enable data reactivity
 
         //define table columns
+        autoColumns: this.isLoadFromFile,
+
+        autoColumnsDefinitions: (definitions) =>{
+
+          definitions.forEach((column) => {
+            column.headerFilter = true; // add header filter to every column
+            column.editor = "input";
+            column.headerMenu = this.headerMenu
+          });
+
+          // definitions.push({ title: 'Выделение', formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerHozAlign:"center", headerSort:false, cellClick:function(e, cell){
+          //     cell.getRow().toggleSelect();
+          //   }},)
+          return definitions;
+        },
+
         columns: this.columns,
 
-        //auto define table columns
-        // autoColumns:true,
 
-        // autoColumnsDefinitions: (definitions) =>{
-        //   //definitions - array of column definition objects
-        //
-        //   definitions.forEach((column) => {
-        //     column.headerFilter = true; // add header filter to every column
-        //     column.editor = "input";
-        //     column.headerMenu = this.headerMenu
-        //   });
-        //
-        //   return definitions;
-        // },
 
-        // pagination
         pagination:"local",
         paginationSize:true,
         paginationSizeSelector:[100, 500, 1000, true],
-        // paginationSizeSelector:[1, 2, 3, true],
         paginationCounter:"rows",
 
-        // movableColumns:true,
+        movableColumns:true,
 
         // history
         history:true,
@@ -243,6 +282,15 @@ export default {
 
       return menu;
     },
+
+    cellClickEvent(e, {_cell: cell}){
+      if (e instanceof FocusEvent) {
+        const column = cell.column.field;
+        const value = cell.value;
+        const row = cell.row.position;
+        this.$emit('cellClick', {row, column, value})
+      }
+    },
     /*dateEditor(cell, onRendered, success, cancel){
      //cell - the cell component for the editable cell
      //onRendered - function to call when the editor has been rendered
@@ -290,6 +338,11 @@ export default {
 
      return input;
    },*/
+
+    writeData() {
+      this.$root.writeData({data: structuredClone(this.tableData), schema: this.schema});
+    },
+
     //undo button
     undo() {
       this.tabulator.undo();
@@ -301,10 +354,15 @@ export default {
     },
 
     addDataRow() {
-      this.tableData.push({})
+      this.tabulator.addRow({});
+      this.tableData = this.tabulator.getData()
     },
     removeDataRow() {
-      this.tableData.pop()
+      this.tabulator.getSelectedRows().forEach((row) => {
+        row.delete();
+      })
+
+      this.tableData = this.tabulator.getData()
     },
 
     //trigger download of data.csv file
@@ -326,13 +384,49 @@ export default {
     downloadPDF(){
       this.tabulator.download("pdf", "data.pdf", {
         orientation:"portrait", //set page orientation to portrait
-        title:"Example Report", //add title to report
       });
     },
 
     //trigger download of data.html file
     downloadHTML(){
       this.tabulator.download("html", "data.html", {style:true});
+    },
+
+    loadCSV() {
+      this.tabulator.importFormat = 'csv'
+      this.isLoadFromFile = true
+      this.tabulator.import("csv", ".csv")
+      .then(() => {
+        this.tableData = this.tabulator.getData()
+        this.createTable()
+        delete this.tabulator.importFormat
+        this.isLoadFromFile = false
+      })
+      .catch(() => {
+        this.tableData = []
+      })
+    },
+    loadJSON() {
+      this.tabulator.import("json", ".json")
+      .then(() => {
+        this.isLoadFromFile = true
+        this.tableData = this.tabulator.getData()
+        this.createTable()
+      })
+      .catch(() => {
+        this.tableData = []
+      })
+    },
+    execute(action) {
+      this[action]()
+    },
+    getDataFromTable() {
+      return this.tabulator.getData()
+    },
+    destroyTable() {
+      if (this.tabulator) {
+        this.tabulator.destroy()
+      }
     },
   }
 };
@@ -342,6 +436,8 @@ export default {
 @import  "../scss/tabulator";
 
 .editable-table-container {
+  padding: 10px;
+
   .title {
 
     color: var(--text_main);

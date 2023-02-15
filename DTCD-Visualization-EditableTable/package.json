@@ -1,6 +1,6 @@
 {
   "name": "dtcd-visualization-editable-table",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Panel with table visualization",
   "private": true,
   "homepage": "https://github.com/ISGNeuroTeam/DTCD-Visualization-EditableTable",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "tabulator-tables": "^5.4.3",
+    "v-click-outside": "^3.2.0",
     "vue-easytable": "^2.21.11"
   }
 }

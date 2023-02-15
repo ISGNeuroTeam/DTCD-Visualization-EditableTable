@@ -1,11 +1,14 @@
 <template>
   <div class="VisualizationTable" style="height: 100%">
     <editable-table
+      ref="editableTableComponent"
       :dataset="dataset"
       :schema="schema"
       :id="id"
       :columnOptions="columnOptions"
       :title="getTitle"
+      :writeStatus="writeStatus"
+      @cellClick="this.$root.publishEventClicked"
     />
   </div>
 </template>
@@ -36,7 +39,7 @@ export default {
     ],
     id:0,
     schema: {},
-
+    writeStatus: ''
 
   }),
   computed: {
@@ -64,9 +67,10 @@ export default {
           const columnOptions = JSON?.parse(val.replaceAll("'", '"'))
           if (Object.keys(columnOptions).length > 0) {
             this.columnOptionsFromConfig = columnOptions
-            return
+            return;
           }
         } catch (e) {
+          console.error('error')
         }
         
 
@@ -143,72 +147,25 @@ export default {
         }
       }
       return null;
+    },
+    setWriteStatus(status) {
+      if (status === 'new') {
+        this.writeStatus = 'run'
+      } else if (status === 'success') {
+        this.writeStatus = 'done'
+        setTimeout(() => {
+          this.writeStatus = ''
+        },500);
+      } else {
+        this.writeStatus = ''
+      }
+    },
+    destroyTable() {
+      this.$refs.editableTableComponent?.destroyTable()
     }
   },
 };
 </script>
 
 <style lang="scss" scoped>
-
-//@import "./scss/theme-default/index.css";
-//*
-//  box-sizing: border-box
-//  margin: 0
-//  padding: 0
-//.VisualizationTable
-//  width: 100%
-//  height: 100%
-//  overflow: auto
-//  padding: 10px
-//  color: var(--text_secondary)
-//  font-family: 'Proxima Nova', sans-serif
-//  background-color: var(--background_main)
-//
-//  .title
-//    color: var(--text_main)
-//    font-size: 18px
-//    font-weight: 700
-//    line-height: 25px
-//    padding-bottom: 8px
-//
-//  .NoData
-//    height: 100%
-//    display: flex
-//    flex-direction: column
-//    align-items: center
-//    justify-content: center
-//
-//    .Icon
-//      color: var(--border_secondary)
-//      font-size: 100px
-//      margin-bottom: 8px
-//
-//  .DataTable
-//    width: 100%
-//    text-align: left
-//    border-collapse: collapse
-//
-//    thead
-//      color: var(--title)
-//      font-size: 15px
-//      font-weight: 700
-//
-//      tr th
-//        height: 40px
-//        padding: 0 30px
-//        background-color: var(--border_24)
-//
-//    tbody
-//      color: var(--text_main)
-//
-//      tr
-//        height: 30px
-//        font-size: 13px
-//        line-height: 16px
-//
-//        td
-//          padding: 10px 30px
-//
-//        &:nth-child(even)
-//          background-color: var(--border_24)
 </style>

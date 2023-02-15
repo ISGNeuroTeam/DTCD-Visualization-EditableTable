@@ -1,6 +1,8 @@
 import pluginMeta from './Plugin.Meta';
 import PluginComponent from './PluginComponent.vue';
 
+import vClickOutside from 'v-click-outside'
+
 import {
   PanelPlugin,
   LogSystemAdapter,
@@ -29,6 +31,7 @@ export class VisualizationTable extends PanelPlugin {
     ...this.defaultConfig,
     columnOptions: "{}",
     dataSource: '',
+    writeTokenName: ''
   }
 
   static getRegistrationMeta() {
@@ -42,7 +45,7 @@ export class VisualizationTable extends PanelPlugin {
     this.#id = `${pluginMeta.name}[${guid}]`;
     this.#logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
     this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
-    this.#eventSystem.registerPluginInstance(this);
+    this.#eventSystem.registerPluginInstance(this, ['Clicked']);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.4.0');
 
@@ -64,6 +67,8 @@ export class VisualizationTable extends PanelPlugin {
   createVueInstance() {
     const { default: VueJS } = this.getDependence('Vue');
 
+    VueJS.use(vClickOutside)
+
     const selector = this.#selector
 
     this.#vue = new VueJS({
@@ -73,6 +78,9 @@ export class VisualizationTable extends PanelPlugin {
       methods: {
         publishEventClicked: (value) => {
           this.#eventSystem.publishEvent('Clicked', value);
+        },
+        writeData: (dataset) => {
+          this.writeData(dataset)
         }
       },
     })
@@ -95,11 +103,12 @@ export class VisualizationTable extends PanelPlugin {
   }
 
   beforeUninstall() {
+    this.#vueComponent.destroyTable()
     this.#vue.$destroy();
     const newRootElement = document.createElement(`div`);
     newRootElement.id = this.#selector.replace('#', '')
-    this.#vue.$el.parentElement.appendChild(newRootElement)
-    this.#vue.$el.parentNode.removeChild(this.#vue.$el);
+    this.#vue.$el.parentElement?.appendChild(newRootElement)
+    this.#vue.$el.parentNode?.removeChild(this.#vue.$el);
   }
 
   setVueComponentPropValue(prop, value) {
@@ -120,9 +129,9 @@ export class VisualizationTable extends PanelPlugin {
     for (const [prop, value] of Object.entries(config)) {
       if (!configProps.includes(prop)) continue;
 
-      if (prop !== 'dataSource') {
+      if (prop !== 'dataSource' && prop !== 'writeTokenName') {
         this.setVueComponentPropValue(prop, value)
-      } else if (value) {
+      } else if (prop === 'dataSource' && value) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
               `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
@@ -134,6 +143,15 @@ export class VisualizationTable extends PanelPlugin {
               'processDataSourceEvent',
               { dataSource: this.#config[prop], status: 'success' },
           );
+
+          this.#eventSystem.unsubscribe(
+            this.#dataSourceSystemGUID,
+            'DataSourceWriteStatusUpdate',
+            this.#guid,
+            'processDataSourceWriteEvent',
+            { dataSource: this.#config[prop], status: 'new' },
+          );
+
         }
 
         const dsNewName = value;
@@ -151,6 +169,16 @@ export class VisualizationTable extends PanelPlugin {
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
+
+        if (ds.type === 'otlrw') {
+          this.#eventSystem.subscribe(
+            this.#dataSourceSystemGUID,
+            'DataSourceWriteStatusUpdate',
+            this.#guid,
+            'processDataSourceWriteEvent',
+            { dataSource: dsNewName, status: 'failed' },
+          );
+        }
 
         if (ds && ds.status === 'success') {
           const data = this.#storageSystem.session.getRecord(dsNewName);
@@ -186,6 +214,19 @@ export class VisualizationTable extends PanelPlugin {
     );
     this.loadSchema(schema);
     this.loadData(data);
+  }
+
+  processDataSourceWriteEvent({dataSource, status}) {
+    this.#vueComponent.setWriteStatus(status)
+
+    this.#logSystem.debug(
+      `${this.#id} process DataSourceWriteStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
+    );
+
+  }
+
+  getDatasetFromTable() {
+    return this.#vueComponent.$refs.editableTableComponent.getDataFromTable()
   }
 
   setFormSettings(config) {
@@ -245,5 +286,13 @@ export class VisualizationTable extends PanelPlugin {
       if (!vueNamesFields.includes(prop)) continue;
       this.#vueComponent[prop] = value;
     }
+  }
+
+
+
+  writeData(dataset) {
+    const dsName = this.#config?.dataSource
+    if (!dsName) return
+    this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 }
