@@ -96,7 +96,6 @@ export class VisualizationTable extends PanelPlugin {
 
     this.#vueComponent.setId(workSpaceID + this.#guid)
 
-    this.setPluginConfig(this.#config)
 
   }
 
@@ -135,7 +134,7 @@ export class VisualizationTable extends PanelPlugin {
       if (!configProps.includes(prop)) continue;
 
 
-      if (prop !== 'dataSource' && prop !== 'writeTokenName' && !prop.includes('field.')) {
+      if (prop !== 'dataSource' && !prop.includes('field.')) {
         this.setVueComponentPropValue(prop, value)
       } else if (prop === 'dataSource'
         && value
@@ -162,7 +161,6 @@ export class VisualizationTable extends PanelPlugin {
           );
 
         }
-
         Object.keys(this.#config).forEach((key) => {
           if (!this.#defaultConfigProps.includes(key)) {
             delete this.#config[key]
@@ -211,6 +209,8 @@ export class VisualizationTable extends PanelPlugin {
     if (Object.keys(this.#config).find(field => field.includes('field.'))) {
       this.setTableConfigOptions(this.#config)
     }
+
+    Application.autocomplete.ConfigEditorPanel_right.createConfigForm({guid:this.#guid})
   }
 
   getPluginConfig() {
@@ -238,7 +238,6 @@ export class VisualizationTable extends PanelPlugin {
       }
     }
     })
-    Application.autocomplete.ConfigEditorPanel_right.createConfigForm({guid:this.#guid})
   }
 
   addFieldsToConfig(config) {

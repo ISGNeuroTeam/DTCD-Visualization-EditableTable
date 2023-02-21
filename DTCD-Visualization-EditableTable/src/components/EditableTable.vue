@@ -104,7 +104,7 @@ export default {
         const options = this.columnOptions[key]
         const column = {
           field: key,
-          title: options.title || key,
+          title: options?.title || key,
           frozen: options?.frozen || false,
           headerFilter: options?.headerFilter || false,
           editor: options?.editor || false,
@@ -180,7 +180,7 @@ export default {
     },
   },
   mounted() {
-    this.createTable = throttle(this.createTable, 3000)
+    // this.createTable = throttle(this.createTable, 3000)
   },
   methods: {
     createTable() {
