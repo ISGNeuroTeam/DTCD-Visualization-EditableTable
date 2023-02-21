@@ -100,7 +100,7 @@ export default {
       ]
 
       if  (!!Object.keys(this.columnOptions).length) {
-      return Object.keys(this.columnOptions).reduce((acc, key) => {
+      return Object.keys(this.schema).reduce((acc, key) => {
         const options = this.columnOptions[key]
         const column = {
           field: key,
@@ -115,6 +115,7 @@ export default {
         if (options?.formatter) {
           if (options?.formatter === "color") {
             column.formatter = colorFixed
+            column.headerFilter = 'input'
           } else {
             column.formatter = options?.formatter
           }
@@ -127,6 +128,7 @@ export default {
         }
         if (options?.editor === "list" && options?.editorParams) {
           column.editorParams = options.editorParams
+          column.headerFilter = 'input'
         }
 
         return [
@@ -166,6 +168,12 @@ export default {
       handler(val) {
         this.tableData = structuredClone(val)
         this.isLoadFromFile = false
+        this.createTable()
+      },
+      deep: true
+    },
+    columnOptions: {
+      handler() {
         this.createTable()
       },
       deep: true
