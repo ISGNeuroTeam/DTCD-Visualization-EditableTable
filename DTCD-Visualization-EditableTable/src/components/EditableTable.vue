@@ -101,6 +101,9 @@ export default {
 
       if  (!!Object.keys(this.columnOptions).length) {
       return Object.keys(this.schema).reduce((acc, key) => {
+        if (key === '_columnOptions') {
+          return acc
+        }
         const options = this.columnOptions[key]
         const column = {
           field: key,

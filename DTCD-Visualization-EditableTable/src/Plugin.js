@@ -131,7 +131,7 @@ export class VisualizationTable extends PanelPlugin {
     const configProps = Object.keys(this.#config);
 
     for (const [prop, value] of Object.entries(config)) {
-      if (!configProps.includes(prop)) continue;
+      // if (!configProps.includes(prop)) continue;
 
 
       if (prop !== 'dataSource' && !prop.includes('field.')) {
@@ -198,8 +198,8 @@ export class VisualizationTable extends PanelPlugin {
         if (ds && ds.status === 'success') {
           const data = this.#storageSystem.session.getRecord(dsNewName);
           const schema = this.#storageSystem.session.getRecord(`${dsNewName}_SCHEMA`)
-          this.loadData(data);
           this.loadSchema(schema);
+          this.loadData(data);
         }
       }
 
@@ -209,8 +209,9 @@ export class VisualizationTable extends PanelPlugin {
     if (Object.keys(this.#config).find(field => field.includes('field.'))) {
       this.setTableConfigOptions(this.#config)
     }
-
-    Application.autocomplete.ConfigEditorPanel_right.createConfigForm({guid:this.#guid})
+    if (Application?.getInstance(this.#guid)) {
+      Application.autocomplete.ConfigEditorPanel_right.createConfigForm({guid:this.#guid})
+    }
   }
 
   getPluginConfig() {
@@ -220,6 +221,50 @@ export class VisualizationTable extends PanelPlugin {
 
   loadData(data) {
     this.#vueComponent.setDataset(data);
+
+    const columnOptionsJson = data.find((item) => item?._columnOptions)?._columnOptions
+    if (columnOptionsJson) {
+    const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
+      Object.keys(columnOptions).forEach((metricName) => {
+        const metric = columnOptions[metricName]
+        Object.keys(metric).forEach((propName) => {
+          const configPropName = `field.${metricName}.${propName}`
+          if (configPropName in this.#config) {
+            if (
+              propName === 'editor'
+              && typeof metric[propName] === 'boolean'
+              && this.#config[configPropName] === "false"
+            ) {
+              this.#config[configPropName] = metric[propName] === true
+                ? 'true'
+                : `${metric[propName]}`
+              return
+            }
+            if (
+              propName === 'editorParams'
+              && this.#config[configPropName] === '{}'
+            ) {
+              this.#config[configPropName] = JSON.stringify(metric[propName])
+              return
+            }
+            if (['title', 'formatter', 'headerFilter'].includes(propName)) {
+              if ((propName === 'title'
+                  && this.#config[configPropName] === metricName)
+                  || (propName === 'formatter'
+                  && this.#config[configPropName] === 'null')
+                  || (propName === 'headerFilter'
+                  && this.#config[configPropName] === 'input')
+              ) {
+
+                this.#config[configPropName] = metric[propName]
+              }
+                return
+            }
+            this.#config[configPropName] = metric[propName]
+          }
+        })
+      })
+    }
   }
   loadSchema(schema) {
     this.#vueComponent.setSchema(schema);
@@ -228,9 +273,9 @@ export class VisualizationTable extends PanelPlugin {
       if (this.#config[`field.${key}.title`] === undefined) {
         this.#config[`field.${key}.title`] = key
         this.#config[`field.${key}.frozen`] = false
-        this.#config[`field.${key}.editor`] = false
-        this.#config[`field.${key}.list`] = '{}'
-        this.#config[`field.${key}.formatter`] = null
+        this.#config[`field.${key}.editor`] = "false"
+        this.#config[`field.${key}.editorParams`] = '{}'
+        this.#config[`field.${key}.formatter`] = 'null'
         this.#config[`field.${key}.headerFilter`] = 'input'
         this.#datasetEditingFields.push(
           ...getFieldsForConfig(key)

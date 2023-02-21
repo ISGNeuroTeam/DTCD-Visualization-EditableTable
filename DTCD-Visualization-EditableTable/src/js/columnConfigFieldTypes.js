@@ -28,13 +28,14 @@ export const getFieldsForConfig = (key) => ([
       },
       options: [
         { label: 'Выключить', value: false },
+        { label: 'Включить', value: true },
         { label: 'Текстовое поле', value: 'input' },
         { label: 'Выпадающий список', value: 'list' },
       ],
     },
     {
       component: 'textarea',
-      propName: `field.${key}.list`,
+      propName: `field.${key}.editorParams`,
       attrs: {
         label: 'Настройки для выпадающего списка',
         propValue: '{}',

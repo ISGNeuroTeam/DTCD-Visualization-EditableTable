@@ -107,7 +107,7 @@ export default {
             }
             return processedProp
           }
-          if (prop === 'list') {
+          if (prop === 'editorParams') {
             try {
               const parsedValue = JSON.parse(propValue?.replaceAll("'", '"'))
               if (Object.keys(parsedValue).length > 0) {
@@ -147,7 +147,7 @@ export default {
           hasServiceFields = true
           if (!this.columnOptionsFromConfig) {
             this.title = this.titleFromConfig || item?._header || ''
-            this.columnOptions = item?._columnOptions ? JSON.parse(item?._columnOptions?.replaceAll("'", '"')) : {};
+            // this.columnOptions = item?._columnOptions ? JSON.parse(item?._columnOptions?.replaceAll("'", '"')) : {};
           } else {
             this.columnOptions = this.columnOptionsFromConfig
           }
