@@ -19,7 +19,8 @@
 <script src="../js/xlsx.full.min"></script>
 <script>
 import {TabulatorFull as Tabulator} from 'tabulator-tables';
-import {throttle} from '../throttle';
+import {throttle} from '../js/throttle';
+import {debounce} from '../js/debounce';
 import EditableTableControls from './EditableTableControls';
 
 const colorFixed = function(cell, formatterParams, onRendered){
@@ -99,7 +100,7 @@ export default {
         },
       ]
 
-      if  (!!Object.keys(this.columnOptions).length) {
+      if  (this.columnOptions && !!Object.keys(this.columnOptions).length) {
       return Object.keys(this.schema).reduce((acc, key) => {
         if (key === '_columnOptions') {
           return acc
@@ -168,27 +169,37 @@ export default {
   },
   watch: {
     dataset: {
-      handler(val) {
+      handler(val, oldVal) {
         this.tableData = structuredClone(val)
         this.isLoadFromFile = false
-        this.createTable()
+        if (oldVal.length === 0) {
+          this.createTable()
+        } else if (this.tabulator) {
+          this.tabulator.setColumns(this.columns);
+          this.tabulator.setData(this.dataset);
+        }
       },
       deep: true
     },
     columnOptions: {
-      handler() {
-        this.createTable()
+      handler(val, oldVal) {
+        if (!oldVal || Object.keys(oldVal).length === 0) {
+          this.createTable()
+        } else if (this.tabulator) {
+          this.tabulator.setColumns(this.columns);
+        }
       },
       deep: true
     },
   },
-  mounted() {
-    // this.createTable = throttle(this.createTable, 3000)
+  created() {
+    this.createTable = throttle(this.createTable, 2000)
   },
   methods: {
     createTable() {
       if (this.tabulator) {
         this.tabulator.destroy()
+        this.tabulator = null
       }
       this.tabulator = new Tabulator(this.$refs.table, {
         addRowPos: 'top',

@@ -283,6 +283,32 @@ export class VisualizationTable extends PanelPlugin {
       }
     }
     })
+    // Object.keys(schema).
+
+    const metrics = [... new Set(Object.keys(this.#config)
+    .filter((key) => key.includes('field.'))
+    .map(key => key.split('.')[1]))]
+
+    metrics.forEach(metric => {
+        if (!Object.keys(schema).includes(metric)) {
+          Object.keys(this.#config)
+          .filter((key) => key.includes('field.'))
+          .forEach(optionName => {
+            if (optionName.split('.')[1] === metric) {
+              delete this.#config[optionName]
+
+             const arrayOfStartSequenceIndex = this.#datasetEditingFields.map((field, index) => {
+                if (field?.component === 'title' && field?.propValue === metric) {
+                  return index
+                }
+              })
+              arrayOfStartSequenceIndex.forEach((index) => {
+                this.#datasetEditingFields.splice(index, 7)
+              })
+            }
+          })
+        }
+      })
   }
 
   addFieldsToConfig(config) {

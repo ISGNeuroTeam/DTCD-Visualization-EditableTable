@@ -15,7 +15,7 @@ export const getFieldsForConfig = (key) => ([
       component: 'switch',
       propName: `field.${key}.frozen`,
       attrs: {
-        label: `Замарозить`,
+        label: `Закрепить`,
         propValue: false,
       },
     },
