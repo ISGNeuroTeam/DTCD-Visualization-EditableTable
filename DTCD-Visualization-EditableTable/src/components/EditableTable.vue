@@ -168,26 +168,34 @@ export default {
     }
   },
   watch: {
+    schema: {
+      handler(val, oldVal) {
+        if (JSON.stringify(val) !== JSON.stringify(oldVal)) {
+          this.$nextTick(() => {
+            this.createTable()
+          })
+        }
+      },
+      deep: true
+    },
     dataset: {
       handler(val, oldVal) {
         this.tableData = structuredClone(val)
         this.isLoadFromFile = false
-        if (oldVal.length === 0) {
-          this.createTable()
-        } else if (this.tabulator) {
-          this.tabulator.setColumns(this.columns);
-          this.tabulator.setData(this.dataset);
+        if (this.tabulator) {
+          // const newColumns =
+          // this.tabulator.setColumns(this.columns);
+          this.$nextTick(() => {
+            // this.tabulator.updateColumnDefinition(this.columns);
+            this.tabulator.setData(this.dataset);
+          })
         }
       },
       deep: true
     },
     columnOptions: {
       handler(val, oldVal) {
-        if (!oldVal || Object.keys(oldVal).length === 0) {
-          this.createTable()
-        } else if (this.tabulator) {
-          this.tabulator.setColumns(this.columns);
-        }
+        this.updateColumnDefinition()
       },
       deep: true
     },
@@ -196,6 +204,33 @@ export default {
     this.createTable = throttle(this.createTable, 500)
   },
   methods: {
+    async updateColumnDefinition() {
+      if (this.tabulator && Object.keys(this.dataset).length > 0 ) {
+        const tabulatorColumns = this.tabulator.getColumns()
+        const columnDefinition = this.columns.reduce((acc, col) => {
+          if (!col.field) {
+            return [
+              ...acc,
+              col,
+            ]
+          }
+          const {_column: tCol} = tabulatorColumns.find(({_column: tabulatorCol}) => {
+            return tabulatorCol.field === col.field
+          })
+          return [
+            ...acc,
+            {
+              ...col,
+              width: tCol.width
+            }
+          ]
+
+        },[])
+
+
+        this.tabulator.setColumns(columnDefinition)
+      }
+    },
     createTable() {
       if (this.tabulator) {
         this.tabulator.destroy()
