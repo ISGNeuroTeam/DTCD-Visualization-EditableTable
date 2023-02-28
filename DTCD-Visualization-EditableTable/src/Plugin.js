@@ -215,6 +215,11 @@ export class VisualizationTable extends PanelPlugin {
   }
 
   getPluginConfig() {
+    Object.keys(this.#config).forEach((key) => {
+      if (key.includes('editorParams') && typeof this.#config[key] !== 'string') {
+        this.#config[key] = JSON.stringify(this.#config[key])
+      }
+    })
     this.addFieldsToConfig(this.#config)
     return { ...this.#config };
   }
