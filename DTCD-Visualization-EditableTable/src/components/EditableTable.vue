@@ -193,7 +193,7 @@ export default {
     },
   },
   created() {
-    this.createTable = throttle(this.createTable, 2000)
+    this.createTable = throttle(this.createTable, 500)
   },
   methods: {
     createTable() {
