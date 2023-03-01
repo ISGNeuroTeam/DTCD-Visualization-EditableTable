@@ -19,7 +19,8 @@
 <script src="../js/xlsx.full.min"></script>
 <script>
 import {TabulatorFull as Tabulator} from 'tabulator-tables';
-import {throttle} from '../throttle';
+import {throttle} from '../js/throttle';
+import {debounce} from '../js/debounce';
 import EditableTableControls from './EditableTableControls';
 
 const colorFixed = function(cell, formatterParams, onRendered){
@@ -99,12 +100,15 @@ export default {
         },
       ]
 
-      if  (!!Object.keys(this.columnOptions).length) {
-      return Object.keys(this.columnOptions).reduce((acc, key) => {
+      if  (this.columnOptions && !!Object.keys(this.columnOptions).length) {
+      return Object.keys(this.schema).reduce((acc, key) => {
+        if (key === '_columnOptions') {
+          return acc
+        }
         const options = this.columnOptions[key]
         const column = {
           field: key,
-          title: options.title || key,
+          title: options?.title || key,
           frozen: options?.frozen || false,
           headerFilter: options?.headerFilter || false,
           editor: options?.editor || false,
@@ -115,6 +119,7 @@ export default {
         if (options?.formatter) {
           if (options?.formatter === "color") {
             column.formatter = colorFixed
+            column.headerFilter = 'input'
           } else {
             column.formatter = options?.formatter
           }
@@ -127,6 +132,7 @@ export default {
         }
         if (options?.editor === "list" && options?.editorParams) {
           column.editorParams = options.editorParams
+          column.headerFilter = 'input'
         }
 
         return [
@@ -162,22 +168,73 @@ export default {
     }
   },
   watch: {
+    schema: {
+      handler(val, oldVal) {
+        if (JSON.stringify(val) !== JSON.stringify(oldVal)) {
+          this.$nextTick(() => {
+            this.createTable()
+          })
+        }
+      },
+      deep: true
+    },
     dataset: {
-      handler(val) {
+      handler(val, oldVal) {
         this.tableData = structuredClone(val)
         this.isLoadFromFile = false
-        this.createTable()
+        if (this.tabulator) {
+          // const newColumns =
+          // this.tabulator.setColumns(this.columns);
+          this.$nextTick(() => {
+            // this.tabulator.updateColumnDefinition(this.columns);
+            this.tabulator.setData(this.dataset);
+          })
+        }
+      },
+      deep: true
+    },
+    columnOptions: {
+      handler(val, oldVal) {
+        this.updateColumnDefinition()
       },
       deep: true
     },
   },
-  mounted() {
-    this.createTable = throttle(this.createTable, 3000)
+  created() {
+    this.createTable = throttle(this.createTable, 500)
   },
   methods: {
+    async updateColumnDefinition() {
+      if (this.tabulator && Object.keys(this.dataset).length > 0 ) {
+        const tabulatorColumns = this.tabulator.getColumns()
+        const columnDefinition = this.columns.reduce((acc, col) => {
+          if (!col.field) {
+            return [
+              ...acc,
+              col,
+            ]
+          }
+          const {_column: tCol} = tabulatorColumns.find(({_column: tabulatorCol}) => {
+            return tabulatorCol.field === col.field
+          })
+          return [
+            ...acc,
+            {
+              ...col,
+              width: tCol.width
+            }
+          ]
+
+        },[])
+
+
+        this.tabulator.setColumns(columnDefinition)
+      }
+    },
     createTable() {
       if (this.tabulator) {
         this.tabulator.destroy()
+        this.tabulator = null
       }
       this.tabulator = new Tabulator(this.$refs.table, {
         addRowPos: 'top',

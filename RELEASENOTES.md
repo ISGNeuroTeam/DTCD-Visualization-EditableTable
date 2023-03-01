@@ -1,3 +1,8 @@
+## [0.3.0]
+
+### Added
+- add editing column options from config panel
+
 ## [0.2.0]
 
 ### Added

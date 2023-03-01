@@ -61,24 +61,24 @@ export default {
     setTitle(value = '') {
       this.titleFromConfig = value;
     },
-    setColumnOptions(val) {
-      if (val.length > 0) {
-        try {
-          const columnOptions = JSON?.parse(val.replaceAll("'", '"'))
-          if (Object.keys(columnOptions).length > 0) {
-            this.columnOptionsFromConfig = columnOptions
-            return;
-          }
-        } catch (e) {
-          console.error('error')
-        }
-        
-
-      }
-
-      this.columnOptionsFromConfig = null
-      this.columnOptions = null
-    },
+    // setColumnOptions(val) {
+    //   if (val.length > 0) {
+    //     try {
+    //       const columnOptions = JSON?.parse(val.replaceAll("'", '"'))
+    //       if (Object.keys(columnOptions).length > 0) {
+    //         this.columnOptionsFromConfig = columnOptions
+    //         return;
+    //       }
+    //     } catch (e) {
+    //       console.error('error')
+    //     }
+    //
+    //
+    //   }
+    //
+    //   this.columnOptionsFromConfig = null
+    //   this.columnOptions = null
+    // },
     isServiceFields(item) {
       const serviceFields = [
         '_header',
@@ -91,7 +91,54 @@ export default {
     setSchema(schema) {
       this.schema = schema;
     },
+    setColumnConfig(columnConfig) {
+      const columnOptions = Object.keys(columnConfig).reduce((metricAcc,metric) => {
+        const metricProps = Object.keys(columnConfig[metric]).reduce((processedProp, prop) => {
+          const propValue = columnConfig[metric][prop]
+          if (prop === 'editor') {
+            if (propValue !== '') {
+              processedProp.editor = propValue === 'false'
+                ? false
+                : propValue === 'true'
+                  ? true
+                  : propValue;
+            } else {
+              processedProp.editor = false
+            }
+            return processedProp
+          }
+          if (prop === 'editorParams') {
+            try {
+              const parsedValue = JSON.parse(propValue?.replaceAll("'", '"'))
+              if (Object.keys(parsedValue).length > 0) {
+                processedProp.editorParams = parsedValue
+              }
+              return processedProp
+            } catch (e) {
+              return processedProp
+            }
+          }
+          if (prop === 'formatter') {
+            if (propValue !== 'null') {
+            processedProp[prop] = propValue
+            }
+            return processedProp
+          }
 
+          processedProp[prop] = propValue
+          return processedProp
+
+        },{})
+
+        return {
+          ...metricAcc,
+          [metric]: metricProps,
+        }
+      }, {})
+
+      this.columnOptionsFromConfig = columnOptions
+      this.columnOptions = columnOptions
+    },
     setDataset(data = []) {
       this.columnOptions = {}
       let hasServiceFields = false
@@ -100,7 +147,7 @@ export default {
           hasServiceFields = true
           if (!this.columnOptionsFromConfig) {
             this.title = this.titleFromConfig || item?._header || ''
-            this.columnOptions = item?._columnOptions ? JSON?.parse(item?._columnOptions?.replaceAll("'", '"')) : {};
+            // this.columnOptions = item?._columnOptions ? JSON.parse(item?._columnOptions?.replaceAll("'", '"')) : {};
           } else {
             this.columnOptions = this.columnOptionsFromConfig
           }

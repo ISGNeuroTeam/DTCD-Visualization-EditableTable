@@ -8,9 +8,10 @@ import {
   LogSystemAdapter,
   EventSystemAdapter,
   StorageSystemAdapter,
-  DataSourceSystemAdapter, WorkspaceSystemAdapter,
-} from './../../DTCD-SDK';
+  DataSourceSystemAdapter,
+} from '../../DTCD-SDK';
 
+import { getFieldsForConfig } from './js/columnConfigFieldTypes'
 
 export class VisualizationTable extends PanelPlugin {
 
@@ -21,18 +22,22 @@ export class VisualizationTable extends PanelPlugin {
   #storageSystem;
   #dataSourceSystem;
   #dataSourceSystemGUID;
-  #workspaceSystem;
   #vueComponent;
   #vue
   #lastVisible
   #selector
 
+  #defaultConfigProps = [
+    ...Object.keys(this.defaultConfig),
+    'dataSource',
+  ]
+
   #config = {
     ...this.defaultConfig,
-    columnOptions: "{}",
     dataSource: '',
-    writeTokenName: ''
   }
+
+  #datasetEditingFields = []
 
   static getRegistrationMeta() {
     return pluginMeta;
@@ -91,7 +96,6 @@ export class VisualizationTable extends PanelPlugin {
 
     this.#vueComponent.setId(workSpaceID + this.#guid)
 
-    this.setPluginConfig(this.#config)
 
   }
 
@@ -127,11 +131,15 @@ export class VisualizationTable extends PanelPlugin {
     const configProps = Object.keys(this.#config);
 
     for (const [prop, value] of Object.entries(config)) {
-      if (!configProps.includes(prop)) continue;
+      // if (!configProps.includes(prop)) continue;
 
-      if (prop !== 'dataSource' && prop !== 'writeTokenName') {
+
+      if (prop !== 'dataSource' && !prop.includes('field.')) {
         this.setVueComponentPropValue(prop, value)
-      } else if (prop === 'dataSource' && value) {
+      } else if (prop === 'dataSource'
+        && value
+        && this.#config[prop] !== value
+      ) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
               `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
@@ -153,6 +161,13 @@ export class VisualizationTable extends PanelPlugin {
           );
 
         }
+        Object.keys(this.#config).forEach((key) => {
+          if (!this.#defaultConfigProps.includes(key)) {
+            delete this.#config[key]
+            delete config[key]
+          }
+        })
+        this.#datasetEditingFields = []
 
         const dsNewName = value;
 
@@ -191,17 +206,148 @@ export class VisualizationTable extends PanelPlugin {
       this.#config[prop] = value;
       this.#logSystem.debug(`${this.#id} config prop value "${prop}" set to "${value}"`);
     }
+    if (Object.keys(this.#config).find(field => field.includes('field.'))) {
+      this.setTableConfigOptions(this.#config)
+    }
+    if (Application?.getInstance(this.#guid)) {
+      Application.autocomplete.ConfigEditorPanel_right.createConfigForm({guid:this.#guid})
+    }
   }
 
   getPluginConfig() {
+    Object.keys(this.#config).forEach((key) => {
+      if (key.includes('editorParams') && typeof this.#config[key] !== 'string') {
+        this.#config[key] = JSON.stringify(this.#config[key])
+      }
+    })
+    this.addFieldsToConfig(this.#config)
     return { ...this.#config };
   }
 
   loadData(data) {
     this.#vueComponent.setDataset(data);
+
+    const columnOptionsJson = data.find((item) => item?._columnOptions)?._columnOptions
+    if (columnOptionsJson) {
+    const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
+      Object.keys(columnOptions).forEach((metricName) => {
+        const metric = columnOptions[metricName]
+        Object.keys(metric).forEach((propName) => {
+          const configPropName = `field.${metricName}.${propName}`
+          if (configPropName in this.#config) {
+            if (
+              propName === 'editor'
+              && typeof metric[propName] === 'boolean'
+              && this.#config[configPropName] === "false"
+            ) {
+              this.#config[configPropName] = metric[propName] === true
+                ? 'true'
+                : `${metric[propName]}`
+              return
+            }
+            if (
+              propName === 'editorParams'
+              && this.#config[configPropName] === '{}'
+            ) {
+              this.#config[configPropName] = JSON.stringify(metric[propName])
+              return
+            }
+            if (['title', 'formatter', 'headerFilter'].includes(propName)) {
+              if ((propName === 'title'
+                  && this.#config[configPropName] === metricName)
+                  || (propName === 'formatter'
+                  && this.#config[configPropName] === 'null')
+                  || (propName === 'headerFilter'
+                  && this.#config[configPropName] === 'input')
+              ) {
+
+                this.#config[configPropName] = metric[propName]
+              }
+                return
+            }
+            this.#config[configPropName] = metric[propName]
+          }
+        })
+      })
+    }
   }
   loadSchema(schema) {
     this.#vueComponent.setSchema(schema);
+    Object.keys(schema).forEach((key) => {
+    if (key !== '_columnOptions') {
+      if (this.#config[`field.${key}.title`] === undefined) {
+        this.#config[`field.${key}.title`] = key
+        this.#config[`field.${key}.frozen`] = false
+        this.#config[`field.${key}.editor`] = "false"
+        this.#config[`field.${key}.editorParams`] = '{}'
+        this.#config[`field.${key}.formatter`] = 'null'
+        this.#config[`field.${key}.headerFilter`] = 'input'
+        this.#datasetEditingFields.push(
+          ...getFieldsForConfig(key)
+        )
+      }
+    }
+    })
+    // Object.keys(schema).
+
+    const metrics = [... new Set(Object.keys(this.#config)
+    .filter((key) => key.includes('field.'))
+    .map(key => key.split('.')[1]))]
+
+    metrics.forEach(metric => {
+        if (!Object.keys(schema).includes(metric)) {
+          Object.keys(this.#config)
+          .filter((key) => key.includes('field.'))
+          .forEach(optionName => {
+            if (optionName.split('.')[1] === metric) {
+              delete this.#config[optionName]
+
+             const arrayOfStartSequenceIndex = this.#datasetEditingFields.map((field, index) => {
+                if (field?.component === 'title' && field?.propValue === metric) {
+                  return index
+                }
+              })
+              arrayOfStartSequenceIndex.forEach((index) => {
+                this.#datasetEditingFields.splice(index, 7)
+              })
+            }
+          })
+        }
+      })
+  }
+
+  addFieldsToConfig(config) {
+    const metrics =[... new Set(Object.keys(config)
+    .filter((key) => key.includes('field.'))
+    .map(key => key.split('.')[1]))]
+    if (
+      !this.#datasetEditingFields
+      .find((field) => metrics.includes(field.propValue))
+    ) {
+      metrics.forEach((key) => {
+        const configFieldsForProp = getFieldsForConfig(key)
+        if (configFieldsForProp) {
+          this.#datasetEditingFields.push(
+            ...configFieldsForProp
+          )
+        }
+      })
+    }
+
+  }
+
+  setTableConfigOptions(config) {
+    const columnComfig = Object.keys(config)
+    .filter((key) => key.includes('field.'))
+    .reduce((acc, key) => {
+      const [_, fieldName, optionName] = key.split('.')
+      if (!acc[fieldName]) {
+        acc[fieldName] = {}
+      }
+      acc[fieldName][optionName] = this.#config[key]
+      return acc
+    }, {})
+    this.#vueComponent.setColumnConfig(columnComfig)
   }
 
   processDataSourceEvent(eventData) {
@@ -254,14 +400,7 @@ export class VisualizationTable extends PanelPlugin {
           },
         },
         ...this.defaultFields,
-        {
-          component: 'textarea',
-          propName: 'columnOptions',
-          attrs: {
-            label: 'Настройки для колонок',
-            propValue: '{}',
-          },
-        },
+        ...this.#datasetEditingFields
       ],
     };
   }
