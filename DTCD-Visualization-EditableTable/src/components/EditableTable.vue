@@ -398,7 +398,6 @@ export default {
 
     writeData() {
       this.tableData = this.tabulator.getData()
-      console.log('this.tableData', this.tableData);
       this.$root.writeData({data: structuredClone(this.tableData), schema: this.schema});
     },
 
@@ -415,7 +414,7 @@ export default {
     addDataRow() {
       const newRow = Object.keys(this.schema).reduce((acc, item) => {
         const defaultValue = this.schema[item] === 'BIGINT'
-          ? null
+          ? 0
           : this.schema[item] === 'BOOLEAN'
             ? false
             : ''
