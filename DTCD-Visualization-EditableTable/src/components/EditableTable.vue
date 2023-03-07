@@ -185,10 +185,10 @@ export default {
         if (this.tabulator) {
           // const newColumns =
           // this.tabulator.setColumns(this.columns);
-          this.$nextTick(() => {
+          setTimeout(() => {
             // this.tabulator.updateColumnDefinition(this.columns);
             this.tabulator.setData(this.dataset);
-          })
+          },100)
         }
       },
       deep: true
@@ -214,14 +214,14 @@ export default {
               col,
             ]
           }
-          const {_column: tCol} = tabulatorColumns.find(({_column: tabulatorCol}) => {
-            return tabulatorCol.field === col.field
+          const tCol = tabulatorColumns.find((item) => {
+            return item?._column.field === col.field
           })
           return [
             ...acc,
             {
               ...col,
-              width: tCol.width
+              width: tCol._column.width
             }
           ]
 
@@ -397,6 +397,7 @@ export default {
    },*/
 
     writeData() {
+      this.tableData = this.tabulator.getData()
       this.$root.writeData({data: structuredClone(this.tableData), schema: this.schema});
     },
 
@@ -411,7 +412,17 @@ export default {
     },
 
     addDataRow() {
-      this.tabulator.addRow({});
+      const newRow = Object.keys(this.schema).reduce((acc, item) => {
+        const defaultValue = this.schema[item] === 'BOOLEAN'
+          ? false
+          : ''
+        return {
+          ...acc,
+          [item]: defaultValue
+        }
+      },{})
+      this.tabulator.addRow(newRow);
+
       this.tableData = this.tabulator.getData()
     },
     removeDataRow() {

@@ -432,6 +432,7 @@ export class VisualizationTable extends PanelPlugin {
   writeData(dataset) {
     const dsName = this.#config?.dataSource
     if (!dsName) return
+    delete dataset.schema._columnOptions
     this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 }

@@ -1,3 +1,10 @@
+## [0.3.1]
+
+### Fixed
+- remove saving _columnOption to the server
+- fix error in console when field was edited
+- fix saving data to the server
+ 
 ## [0.3.0]
 
 ### Added
