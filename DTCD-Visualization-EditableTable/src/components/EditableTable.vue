@@ -413,11 +413,9 @@ export default {
 
     addDataRow() {
       const newRow = Object.keys(this.schema).reduce((acc, item) => {
-        const defaultValue = this.schema[item] === 'BIGINT'
-          ? 0
-          : this.schema[item] === 'BOOLEAN'
-            ? false
-            : ''
+        const defaultValue = this.schema[item] === 'BOOLEAN'
+          ? false
+          : ''
         return {
           ...acc,
           [item]: defaultValue
