@@ -413,7 +413,19 @@ export default {
     },
 
     addDataRow() {
-      this.tabulator.addRow({});
+      const newRow = Object.keys(this.schema).reduce((acc, item) => {
+        const defaultValue = this.schema[item] === 'BIGINT'
+          ? null
+          : this.schema[item] === 'BOOLEAN'
+            ? false
+            : ''
+        return {
+          ...acc,
+          [item]: defaultValue
+        }
+      },{})
+      this.tabulator.addRow(newRow);
+
       this.tableData = this.tabulator.getData()
     },
     removeDataRow() {
