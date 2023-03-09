@@ -228,6 +228,13 @@ export class VisualizationTable extends PanelPlugin {
     this.#vueComponent.setDataset(data);
 
     const columnOptionsJson = data.find((item) => item?._columnOptions)?._columnOptions
+    const tableOptionsJson = data.find((item) => item?._tableOptions)?._tableOptions
+
+    if (tableOptionsJson) {
+      const tableOptions = JSON.parse(tableOptionsJson?.replaceAll("'", '"')) || {};
+      this.#config.tableOptions = tableOptions;
+    }
+
     if (columnOptionsJson) {
     const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
       Object.keys(columnOptions).forEach((metricName) => {
@@ -281,7 +288,9 @@ export class VisualizationTable extends PanelPlugin {
         this.#config[`field.${key}.editor`] = "false"
         this.#config[`field.${key}.editorParams`] = '{}'
         this.#config[`field.${key}.formatter`] = 'null'
-        this.#config[`field.${key}.headerFilter`] = 'input'
+        this.#config[`field.${key}.formatterParams`] = '{}'
+        this.#config[`field.${key}.headerSort`] = true
+        this.#config[`field.${key}.headerFilter`] = true
         this.#datasetEditingFields.push(
           ...getFieldsForConfig(key)
         )

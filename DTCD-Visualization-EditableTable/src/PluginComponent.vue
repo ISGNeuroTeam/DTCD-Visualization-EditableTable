@@ -5,6 +5,7 @@
       :dataset="dataset"
       :schema="schema"
       :id="id"
+      :tableOptions="tableOptions"
       :columnOptions="columnOptions"
       :title="getTitle"
       :writeStatus="writeStatus"
@@ -29,6 +30,7 @@ export default {
       height:200,
       width:200
     },
+    tableOptions: {},
     columnOptions: null,
     columnOptionsFromConfig: null,
     dataset: [],
@@ -60,6 +62,9 @@ export default {
     },
     setTitle(value = '') {
       this.titleFromConfig = value;
+    },
+    setTableOptions(value = {}) {
+      this.tableOptions = value;
     },
     // setColumnOptions(val) {
     //   if (val.length > 0) {
