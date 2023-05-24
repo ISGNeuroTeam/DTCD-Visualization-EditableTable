@@ -22,12 +22,38 @@ import {TabulatorFull as Tabulator} from 'tabulator-tables';
 import {throttle} from '../js/throttle';
 import {debounce} from '../js/debounce';
 import EditableTableControls from './EditableTableControls';
+import Chart from 'chart.js/auto';
 
 const colorFixed = function(cell, formatterParams, onRendered){
   cell.getElement().style.backgroundColor = this.sanitizeHTML(cell.getValue());
 
   return "&nbsp;";
 }
+
+const chartFormatter = (cell, formatterParams, onRendered) => {
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.height = `${formatterParams?.chartHeight || 150}px`;
+
+  const canvas = document.createElement('canvas');
+
+  onRendered(() => {
+    const { chartOptions } = formatterParams;
+
+    if (!chartOptions) {
+      throw new Error(`Chart required chartOptions in formatterParams`);
+    }
+
+    new Chart(canvas, {
+      ...structuredClone(chartOptions),
+      data: cell.getValue(),
+    });
+  });
+
+  wrapper.append(canvas);
+
+  return wrapper;
+};
 
 export default {
   name: 'editableTable',
@@ -53,6 +79,10 @@ export default {
       require: true
     },
     schema: {
+      type: Object,
+      default: () => ({})
+    },
+    tableOptions: {
       type: Object,
       default: () => ({})
     },
@@ -110,7 +140,8 @@ export default {
           field: key,
           title: options?.title || key,
           frozen: options?.frozen || false,
-          headerFilter: options?.headerFilter || false,
+          headerFilter: options?.headerFilter ?? true,
+          headerSort: options?.headerSort ?? true,
           editor: options?.editor || false,
           headerMenu: this.headerMenu,
           cellClick: this.cellClickEvent
@@ -120,6 +151,11 @@ export default {
           if (options?.formatter === "color") {
             column.formatter = colorFixed
             column.headerFilter = 'input'
+          } else if (options?.formatter === "chart") {
+            column.headerSort = false
+            column.headerFilter = false
+            column.formatter = chartFormatter
+            column.formatterParams = options.formatterParams
           } else {
             column.formatter = options?.formatter
           }
@@ -284,7 +320,7 @@ export default {
 
         // history
         history:true,
-
+        ...this.tableOptions,
       });
     },
     headerMenu(){
@@ -624,7 +660,7 @@ export default {
     background-color: var(--background_main)!important;
     transition: all 0.3s ease-in-out;
 
-  
+
 
     &:hover {
       background-color: var(--button_primary_86)!important;

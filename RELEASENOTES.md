@@ -1,3 +1,9 @@
+## [0.4.0]
+
+### Added
+- new `chart` custom formatter
+- new `_tableOptions` params from table data
+
 ## [0.3.1]
 
 ### Fixed
