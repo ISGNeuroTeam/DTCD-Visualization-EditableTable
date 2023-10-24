@@ -553,21 +553,27 @@ export default {
 }
 
 /*Theme the Tabulator element*/
-.editable-table {
-  background-color: var(--background_main)!important;
-  border: 1px solid var(--border)!important;
+.tabulator.editable-table {
+  background-color: var(--background_main);
+  border: 1px solid var(--border);
   border-radius: 4px;
 
   /*Theme the header*/
   .tabulator-header {
-    background: var(--background_main)!important;
-    color: var(--text_main)!important;
+    background: var(--background_main);
+    color: var(--text_main);
 
     /*Allow column header names to wrap lines*/
     .tabulator-col,
     .tabulator-col-row-handle {
-      background: var(--background_main)!important;
+      background: var(--background_main);
       white-space: normal;
+    }
+
+    .tabulator-col {
+      &.tabulator-sortable.tabulator-col-sorter-element:hover {
+        background-color: var(--background_secondary);
+      }
     }
 
     .tabulator-header-filter input {
@@ -584,25 +590,22 @@ export default {
 
   /*Color the table rows*/
   .tabulator-row{
-    color: var(--text_main)!important;
-    background-color: var(--background_main)!important;
+    color: var(--text_main);
+    background-color: var(--background_main);
 
     /*Color even rows*/
     &:nth-child(even) {
-      background-color: var(--background_secondary)!important;
-    }
-    .tabulator-cell {
-
+      background-color: var(--background_secondary);
     }
   }
 
   .tabulator-footer {
-    background: var(--background_main)!important;
-    border-top: 1px solid var(--border)!important;
-    color: var(--text_main)!important;
+    background: var(--background_main);
+    border-top: 1px solid var(--border);
+    color: var(--text_main);
 
     .tabulator-paginator {
-      color: var(--text_main)!important;
+      color: var(--text_main);
     }
 
     .tabulator-page-size {
@@ -641,13 +644,13 @@ export default {
       border: none;
 
       &:hover {
-        background-color: var(--button_primary_86)!important;
-        color: var(--background_main)!important;
+        background-color: var(--button_primary_86);
+        color: var(--background_main);
       }
 
       &.active {
-        color: var(--background_main)!important;
-        background-color: var(--accent)!important;
+        color: var(--background_main);
+        background-color: var(--accent);
       }
     }
   }
@@ -656,19 +659,16 @@ export default {
 }
 .tabulator-menu.tabulator-popup-container {
   & > .tabulator-menu-item {
+    font-family: 'Proxima Nova', sans-serif;
     color: var(--text_main)!important;
     background-color: var(--background_main)!important;
     transition: all 0.3s ease-in-out;
-
-
 
     &:hover {
       background-color: var(--button_primary_86)!important;
       color: var(--background_main)!important;
     }
-
   }
-
 }
 
 </style>
