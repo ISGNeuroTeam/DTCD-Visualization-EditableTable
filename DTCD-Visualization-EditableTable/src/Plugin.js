@@ -242,7 +242,7 @@ export class VisualizationTable extends PanelPlugin {
     }
 
     if (columnOptionsJson) {
-    const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
+      const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
       Object.keys(columnOptions).forEach((metricName) => {
         const metric = columnOptions[metricName]
         Object.keys(metric).forEach((propName) => {
@@ -281,6 +281,8 @@ export class VisualizationTable extends PanelPlugin {
           }
         })
       })
+
+      this.setTableConfigOptions();
     }
   }
   loadSchema(schema) {
@@ -444,30 +446,29 @@ export class VisualizationTable extends PanelPlugin {
     this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 
-  // loadTestData() {
-  //   this.loadSchema({ _time: "BIGINT", _columnOptions: "STRING", color: "STRING", country: "STRING", bool: "BOOLEAN"});
-  //   this.loadData([
-  //     {"_time":1697791743,"_columnOptions":"{ '_time': {'title': 'Время', 'frozen': true, 'headerFilter':'input' }, 'bool': {'title': 'Bool', 'headerFilter':'input', 'formatter': 'tickCross', 'headerFilter': 'tickCross'}, 'color': {'title': 'Цвет', 'formatter': 'color', 'headerFilter':'input'}, 'country': {'title': 'Страна'}}"},
-  //     {"_time":1800000000,"color":"red","country":"United Kingdom","bool":false},
-  //     {"_time":1900000000,"color":"blue","country":"Germany","bool":false},
-  //     {"_time":2000000000,"color":"green","country":"France","bool":true},
-  //     {"_time":2100000000,"color":"#4f2599","country":"USA","bool":false},
-  //     {"_time":2200000000,"color":"#ffff00","country":"Canada","bool":false},
-  //     {"_time":2300000000,"color":"red","country":"Russia","bool":true},
-  //     {"_time":2400000000,"color":"#ffff00","country":"India","bool":false},
-  //     {"_time":2500000000,"color":"blue","country":"China","bool":false},
-  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
-  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
-  //     {"_time":2600000000,"color":"blue","country":"India","bool":false},
-  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
-  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
-  //     {"_time":2600000000,"color":"#ffff00","country":"USA","bool":false},
-  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
-  //     {"_time":2600000000,"color":"#f12400","bool":false,"test2":160},
-  //     {"_time":2600000000,"color":"#ffff00","country":"South Korea","bool":false},
-  //     {"_time":2600000000,"color":"#ffff00","country":"Canada","bool":false},
-  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
-  //   ]);
-  //   this.setTableConfigOptions();
-  // }
+  loadTestData() {
+    this.loadSchema({ _time: "BIGINT", _columnOptions: "STRING", color: "STRING", country: "STRING", bool: "BOOLEAN"});
+    this.loadData([
+      {"_time":1697791743,"_columnOptions":"{ '_time': {'title': 'Время', 'frozen': true, 'headerFilter':'input' }, 'bool': {'title': 'Bool', 'headerFilter':'input', 'formatter': 'tickCross', 'headerFilter': 'tickCross'}, 'color': {'title': 'Цвет', 'formatter': 'color', 'headerFilter':'input'}, 'country': {'title': 'Страна'}}"},
+      {"_time":1800000000,"color":"red","country":"United Kingdom","bool":false},
+      {"_time":1900000000,"color":"blue","country":"Germany","bool":false},
+      {"_time":2000000000,"color":"green","country":"France","bool":true},
+      {"_time":2100000000,"color":"#4f2599","country":"USA","bool":false},
+      {"_time":2200000000,"color":"#ffff00","country":"Canada","bool":false},
+      {"_time":2300000000,"color":"red","country":"Russia","bool":true},
+      {"_time":2400000000,"color":"#ffff00","country":"India","bool":false},
+      {"_time":2500000000,"color":"blue","country":"China","bool":false},
+      {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+      {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+      {"_time":2600000000,"color":"blue","country":"India","bool":false},
+      {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+      {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+      {"_time":2600000000,"color":"#ffff00","country":"USA","bool":false},
+      {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+      {"_time":2600000000,"color":"#f12400","bool":false,"test2":160},
+      {"_time":2600000000,"color":"#ffff00","country":"South Korea","bool":false},
+      {"_time":2600000000,"color":"#ffff00","country":"Canada","bool":false},
+      {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+    ]);
+  }
 }

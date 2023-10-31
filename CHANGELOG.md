@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - disabling filters in columns
 
+### Changed
+- API of subcriptions
+
+### Fixed
+- render of data in table without config
+
 ## [0.4.0]
 
 ### Added
