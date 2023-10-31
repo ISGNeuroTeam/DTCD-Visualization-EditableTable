@@ -142,14 +142,14 @@ export class VisualizationTable extends PanelPlugin {
       ) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
-              `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
+            `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
           );
           this.#eventSystem.unsubscribe(
-              this.#dataSourceSystemGUID,
-              'DataSourceStatusUpdate',
-              this.#guid,
-              'processDataSourceEvent',
-              { dataSource: this.#config[prop], status: 'success' },
+            this.#dataSourceSystemGUID,
+            'DataSourceStatusUpdate',
+            this.#guid,
+            'processDataSourceEvent',
+            { dataSource: this.#config[prop], status: 'success' },
           );
 
           this.#eventSystem.unsubscribe(
@@ -172,25 +172,31 @@ export class VisualizationTable extends PanelPlugin {
         const dsNewName = value;
 
         this.#logSystem.debug(
-            `Subscribing ${this.#id} for DataSourceStatusUpdate({ dataSource: ${dsNewName}, status: success })`
+          `Subscribing ${this.#id} for DataSourceStatusUpdate({ dataSource: ${dsNewName}, status: success })`
         );
 
         this.#eventSystem.subscribe(
-            this.#dataSourceSystemGUID,
-            'DataSourceStatusUpdate',
-            this.#guid,
-            'processDataSourceEvent',
-            { dataSource: dsNewName, status: 'success' },
+          {
+            eventGUID: this.#dataSourceSystemGUID,
+            eventName: 'DataSourceStatusUpdate',
+            actionGUID: this.#guid,
+            actionName: 'processDataSourceEvent',
+            subscriptionType: 'system',
+          },
+          { dataSource: this.#config[prop], status: 'success' },
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
 
         if (ds.type === 'otlrw') {
           this.#eventSystem.subscribe(
-            this.#dataSourceSystemGUID,
-            'DataSourceWriteStatusUpdate',
-            this.#guid,
-            'processDataSourceWriteEvent',
+            {
+              eventGUID: this.#dataSourceSystemGUID,
+              eventName: 'DataSourceWriteStatusUpdate',
+              actionGUID: this.#guid,
+              actionName: 'processDataSourceWriteEvent',
+              subscriptionType: 'system',
+            },
             { dataSource: dsNewName, status: 'failed' },
           );
         }
