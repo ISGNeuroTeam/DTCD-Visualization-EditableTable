@@ -62,11 +62,11 @@ export const getFieldsForConfig = (key) => ([
     propName: `field.${key}.headerFilter`,
     attrs: {
       label: `Фильтр`,
-      propValue: 'input',
     },
     options: [
       { label: 'Текст', value: 'input' },
       { label: 'Checkbox', value: 'tickCross' },
+      { label: 'Отключено', value: 'turned-off' },
     ],
   },
 ])

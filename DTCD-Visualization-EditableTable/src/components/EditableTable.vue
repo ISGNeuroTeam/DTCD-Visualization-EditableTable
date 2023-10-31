@@ -130,56 +130,57 @@ export default {
         },
       ]
 
-      if  (this.columnOptions && !!Object.keys(this.columnOptions).length) {
+      if (this.columnOptions && !!Object.keys(this.columnOptions).length) {
+        return Object.keys(this.schema).reduce((acc, key) => {
+          if (key === '_columnOptions') {
+            return acc
+          }
+          const options = this.columnOptions[key]
+          const column = {
+            field: key,
+            title: options?.title || key,
+            frozen: options?.frozen || false,
+            headerFilter: options?.headerFilter == 'turned-off' ? false : true,
+            headerSort: options?.headerSort ?? true,
+            editor: options?.editor || false,
+            headerMenu: this.headerMenu,
+            cellClick: this.cellClickEvent
+          };
+
+          if (options?.formatter) {
+            if (options?.formatter === "color") {
+              column.formatter = colorFixed
+            } else if (options?.formatter === "chart") {
+              column.headerSort = false
+              column.headerFilter = false
+              column.formatter = chartFormatter
+              column.formatterParams = options.formatterParams
+            } else {
+              column.formatter = options?.formatter
+            }
+          }
+          if (options?.formatter === "tickCross") {
+            column.headerFilterParams = {"tristate": true};
+            column.headerFilterEmptyCheck = function (value) {
+              return value === null
+            }
+          }
+          if (options?.editor === "list" && options?.editorParams) {
+            column.editorParams = options.editorParams
+            column.headerFilter = 'input'
+          }
+
+          return [
+            ...acc,
+            column,
+          ]
+        }, defaultColumns);
+      }
+
       return Object.keys(this.schema).reduce((acc, key) => {
         if (key === '_columnOptions') {
           return acc
         }
-        const options = this.columnOptions[key]
-        const column = {
-          field: key,
-          title: options?.title || key,
-          frozen: options?.frozen || false,
-          headerFilter: options?.headerFilter ?? true,
-          headerSort: options?.headerSort ?? true,
-          editor: options?.editor || false,
-          headerMenu: this.headerMenu,
-          cellClick: this.cellClickEvent
-        };
-
-        if (options?.formatter) {
-          if (options?.formatter === "color") {
-            column.formatter = colorFixed
-            column.headerFilter = 'input'
-          } else if (options?.formatter === "chart") {
-            column.headerSort = false
-            column.headerFilter = false
-            column.formatter = chartFormatter
-            column.formatterParams = options.formatterParams
-          } else {
-            column.formatter = options?.formatter
-          }
-        }
-        if (options?.formatter === "tickCross") {
-          column.headerFilterParams = {"tristate": true};
-          column.headerFilterEmptyCheck = function (value) {
-            return value === null
-          }
-        }
-        if (options?.editor === "list" && options?.editorParams) {
-          column.editorParams = options.editorParams
-          column.headerFilter = 'input'
-        }
-
-        return [
-          ...acc,
-          column,
-        ]
-      }, defaultColumns);
-    }
-
-
-      return Object.keys(this.schema).reduce((acc, key) => {
         const column = {
           field: key,
           title: key,
@@ -187,7 +188,7 @@ export default {
           headerFilter: this.schema[key] === 'BOOLEAN'? "tickCross" : "input",
           headerMenu: this.headerMenu,
           cellClick:this.cellClickEvent,
-       };
+        };
 
         if (this.schema[key] === 'BOOLEAN') {
           column.formatter = "tickCross";
@@ -199,8 +200,6 @@ export default {
           column,
         ]
       },defaultColumns)
-
-
     }
   },
   watch: {
