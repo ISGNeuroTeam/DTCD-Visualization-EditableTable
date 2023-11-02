@@ -95,13 +95,29 @@ export class VisualizationTable extends PanelPlugin {
     const workSpaceID = Application.autocomplete.WorkspaceSystem.currentWorkspaceID
 
     this.#vueComponent.setId(workSpaceID + this.#guid)
-
-
   }
 
   setVisible(isVisible) {
     if (this.#lastVisible !== isVisible) {
-      isVisible ? this.createVueInstance() : this.beforeUninstall();
+      if (isVisible) {
+        this.createVueInstance();
+
+        const { dataSource } = this.#config;
+        if (dataSource) {
+          const ds = this.#dataSourceSystem.getDataSource(dataSource);
+
+          if (ds && ds.status === 'success') {
+            const data = this.#storageSystem.session.getRecord(dataSource);
+            const schema = this.#storageSystem.session.getRecord(`${dataSource}_SCHEMA`)
+            this.loadSchema(schema);
+            this.loadData(data);
+            this.setTableConfigOptions();
+          }
+        }
+      } else {
+        this.beforeUninstall();
+      }
+
       this.#lastVisible = isVisible;
     }
   }
@@ -132,7 +148,6 @@ export class VisualizationTable extends PanelPlugin {
 
     for (const [prop, value] of Object.entries(config)) {
       // if (!configProps.includes(prop)) continue;
-
 
       if (prop !== 'dataSource' && !prop.includes('field.')) {
         this.setVueComponentPropValue(prop, value)
@@ -281,10 +296,9 @@ export class VisualizationTable extends PanelPlugin {
           }
         })
       })
-
-      this.setTableConfigOptions();
     }
   }
+
   loadSchema(schema) {
     this.#vueComponent.setSchema(schema);
     Object.keys(schema).forEach((key) => {
@@ -376,6 +390,7 @@ export class VisualizationTable extends PanelPlugin {
     );
     this.loadSchema(schema);
     this.loadData(data);
+    this.setTableConfigOptions();
   }
 
   processDataSourceWriteEvent({dataSource, status}) {
@@ -384,7 +399,6 @@ export class VisualizationTable extends PanelPlugin {
     this.#logSystem.debug(
       `${this.#id} process DataSourceWriteStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
     );
-
   }
 
   getDatasetFromTable() {
@@ -446,29 +460,30 @@ export class VisualizationTable extends PanelPlugin {
     this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
 
-  loadTestData() {
-    this.loadSchema({ _time: "BIGINT", _columnOptions: "STRING", color: "STRING", country: "STRING", bool: "BOOLEAN"});
-    this.loadData([
-      {"_time":1697791743,"_columnOptions":"{ '_time': {'title': 'Время', 'frozen': true, 'headerFilter':'input' }, 'bool': {'title': 'Bool', 'headerFilter':'input', 'formatter': 'tickCross', 'headerFilter': 'tickCross'}, 'color': {'title': 'Цвет', 'formatter': 'color', 'headerFilter':'input'}, 'country': {'title': 'Страна'}}"},
-      {"_time":1800000000,"color":"red","country":"United Kingdom","bool":false},
-      {"_time":1900000000,"color":"blue","country":"Germany","bool":false},
-      {"_time":2000000000,"color":"green","country":"France","bool":true},
-      {"_time":2100000000,"color":"#4f2599","country":"USA","bool":false},
-      {"_time":2200000000,"color":"#ffff00","country":"Canada","bool":false},
-      {"_time":2300000000,"color":"red","country":"Russia","bool":true},
-      {"_time":2400000000,"color":"#ffff00","country":"India","bool":false},
-      {"_time":2500000000,"color":"blue","country":"China","bool":false},
-      {"_time":2600000000,"color":"green","country":"Japan","bool":false},
-      {"_time":2600000000,"color":"red","country":"Canada","bool":false},
-      {"_time":2600000000,"color":"blue","country":"India","bool":false},
-      {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
-      {"_time":2600000000,"color":"green","country":"Japan","bool":false},
-      {"_time":2600000000,"color":"#ffff00","country":"USA","bool":false},
-      {"_time":2600000000,"color":"red","country":"Canada","bool":false},
-      {"_time":2600000000,"color":"#f12400","bool":false,"test2":160},
-      {"_time":2600000000,"color":"#ffff00","country":"South Korea","bool":false},
-      {"_time":2600000000,"color":"#ffff00","country":"Canada","bool":false},
-      {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
-    ]);
-  }
+  // loadTestData() {
+  //   this.loadSchema({ _time: "BIGINT", _columnOptions: "STRING", color: "STRING", country: "STRING", bool: "BOOLEAN"});
+  //   this.loadData([
+  //     {"_time":1697791743,"_columnOptions":"{ '_time': {'title': 'Время', 'frozen': true, 'headerFilter':'input' }, 'bool': {'title': 'Bool', 'headerFilter':'input', 'formatter': 'tickCross', 'headerFilter': 'tickCross'}, 'color': {'title': 'Цвет', 'formatter': 'color', 'headerFilter':'input'}, 'country': {'title': 'Страна'}}"},
+  //     {"_time":1800000000,"color":"red","country":"United Kingdom","bool":false},
+  //     {"_time":1900000000,"color":"blue","country":"Germany","bool":false},
+  //     {"_time":2000000000,"color":"green","country":"France","bool":true},
+  //     {"_time":2100000000,"color":"#4f2599","country":"USA","bool":false},
+  //     {"_time":2200000000,"color":"#ffff00","country":"Canada","bool":false},
+  //     {"_time":2300000000,"color":"red","country":"Russia","bool":true},
+  //     {"_time":2400000000,"color":"#ffff00","country":"India","bool":false},
+  //     {"_time":2500000000,"color":"blue","country":"China","bool":false},
+  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"blue","country":"India","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"USA","bool":false},
+  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"#f12400","bool":false,"test2":160},
+  //     {"_time":2600000000,"color":"#ffff00","country":"South Korea","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+  //   ]);
+  //   this.setTableConfigOptions();
+  // }
 }

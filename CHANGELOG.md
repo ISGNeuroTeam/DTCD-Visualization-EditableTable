@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - render of data in table without config
+- render of data after table re-initialization
 
 ## [0.4.0]
 

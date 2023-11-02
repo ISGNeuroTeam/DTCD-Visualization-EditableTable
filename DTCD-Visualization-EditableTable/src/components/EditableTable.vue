@@ -60,7 +60,6 @@ export default {
   components: {
     EditableTableControls
   },
-
   props: {
     title: {
       type: String,
@@ -259,9 +258,7 @@ export default {
               width: tCol._column.width
             }
           ]
-
         },[])
-
 
         this.tabulator.setColumns(columnDefinition)
       }
@@ -283,7 +280,6 @@ export default {
           columns: ["width", "visible"]
         },
         persistenceID:this.id,
-
 
         // data: this.tableData, //link data to table
         data: this.tableData, //link data to table
@@ -307,8 +303,6 @@ export default {
         },
 
         columns: this.columns,
-
-
 
         pagination:"local",
         paginationSize:true,
