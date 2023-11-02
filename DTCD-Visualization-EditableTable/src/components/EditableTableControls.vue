@@ -212,7 +212,7 @@ export default {
 
 <style lang="scss" scoped>
 .Buttons {
-  padding: 0 10px 10px;
+  padding: 0 0 10px;
   display: flex;
   flex-wrap: wrap;
   column-gap: 4px;

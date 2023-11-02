@@ -95,13 +95,29 @@ export class VisualizationTable extends PanelPlugin {
     const workSpaceID = Application.autocomplete.WorkspaceSystem.currentWorkspaceID
 
     this.#vueComponent.setId(workSpaceID + this.#guid)
-
-
   }
 
   setVisible(isVisible) {
     if (this.#lastVisible !== isVisible) {
-      isVisible ? this.createVueInstance() : this.beforeUninstall();
+      if (isVisible) {
+        this.createVueInstance();
+
+        const { dataSource } = this.#config;
+        if (dataSource) {
+          const ds = this.#dataSourceSystem.getDataSource(dataSource);
+
+          if (ds && ds.status === 'success') {
+            const data = this.#storageSystem.session.getRecord(dataSource);
+            const schema = this.#storageSystem.session.getRecord(`${dataSource}_SCHEMA`)
+            this.loadSchema(schema);
+            this.loadData(data);
+            this.setTableConfigOptions();
+          }
+        }
+      } else {
+        this.beforeUninstall();
+      }
+
       this.#lastVisible = isVisible;
     }
   }
@@ -133,7 +149,6 @@ export class VisualizationTable extends PanelPlugin {
     for (const [prop, value] of Object.entries(config)) {
       // if (!configProps.includes(prop)) continue;
 
-
       if (prop !== 'dataSource' && !prop.includes('field.')) {
         this.setVueComponentPropValue(prop, value)
       } else if (prop === 'dataSource'
@@ -142,14 +157,14 @@ export class VisualizationTable extends PanelPlugin {
       ) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
-              `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
+            `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
           );
           this.#eventSystem.unsubscribe(
-              this.#dataSourceSystemGUID,
-              'DataSourceStatusUpdate',
-              this.#guid,
-              'processDataSourceEvent',
-              { dataSource: this.#config[prop], status: 'success' },
+            this.#dataSourceSystemGUID,
+            'DataSourceStatusUpdate',
+            this.#guid,
+            'processDataSourceEvent',
+            { dataSource: this.#config[prop], status: 'success' },
           );
 
           this.#eventSystem.unsubscribe(
@@ -172,25 +187,31 @@ export class VisualizationTable extends PanelPlugin {
         const dsNewName = value;
 
         this.#logSystem.debug(
-            `Subscribing ${this.#id} for DataSourceStatusUpdate({ dataSource: ${dsNewName}, status: success })`
+          `Subscribing ${this.#id} for DataSourceStatusUpdate({ dataSource: ${dsNewName}, status: success })`
         );
 
         this.#eventSystem.subscribe(
-            this.#dataSourceSystemGUID,
-            'DataSourceStatusUpdate',
-            this.#guid,
-            'processDataSourceEvent',
-            { dataSource: dsNewName, status: 'success' },
+          {
+            eventGUID: this.#dataSourceSystemGUID,
+            eventName: 'DataSourceStatusUpdate',
+            actionGUID: this.#guid,
+            actionName: 'processDataSourceEvent',
+            subscriptionType: 'system',
+          },
+          { dataSource: this.#config[prop], status: 'success' },
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
 
         if (ds.type === 'otlrw') {
           this.#eventSystem.subscribe(
-            this.#dataSourceSystemGUID,
-            'DataSourceWriteStatusUpdate',
-            this.#guid,
-            'processDataSourceWriteEvent',
+            {
+              eventGUID: this.#dataSourceSystemGUID,
+              eventName: 'DataSourceWriteStatusUpdate',
+              actionGUID: this.#guid,
+              actionName: 'processDataSourceWriteEvent',
+              subscriptionType: 'system',
+            },
             { dataSource: dsNewName, status: 'failed' },
           );
         }
@@ -236,7 +257,7 @@ export class VisualizationTable extends PanelPlugin {
     }
 
     if (columnOptionsJson) {
-    const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
+      const columnOptions = JSON.parse(columnOptionsJson?.replaceAll("'", '"')) || {}
       Object.keys(columnOptions).forEach((metricName) => {
         const metric = columnOptions[metricName]
         Object.keys(metric).forEach((propName) => {
@@ -267,10 +288,9 @@ export class VisualizationTable extends PanelPlugin {
                   || (propName === 'headerFilter'
                   && this.#config[configPropName] === 'input')
               ) {
-
                 this.#config[configPropName] = metric[propName]
               }
-                return
+              return
             }
             this.#config[configPropName] = metric[propName]
           }
@@ -278,24 +298,25 @@ export class VisualizationTable extends PanelPlugin {
       })
     }
   }
+
   loadSchema(schema) {
     this.#vueComponent.setSchema(schema);
     Object.keys(schema).forEach((key) => {
-    if (key !== '_columnOptions') {
-      if (this.#config[`field.${key}.title`] === undefined) {
-        this.#config[`field.${key}.title`] = key
-        this.#config[`field.${key}.frozen`] = false
-        this.#config[`field.${key}.editor`] = "false"
-        this.#config[`field.${key}.editorParams`] = '{}'
-        this.#config[`field.${key}.formatter`] = 'null'
-        this.#config[`field.${key}.formatterParams`] = '{}'
-        this.#config[`field.${key}.headerSort`] = true
-        this.#config[`field.${key}.headerFilter`] = true
-        this.#datasetEditingFields.push(
-          ...getFieldsForConfig(key)
-        )
+      if (key !== '_columnOptions') {
+        if (this.#config[`field.${key}.title`] === undefined) {
+          this.#config[`field.${key}.title`] = key
+          this.#config[`field.${key}.frozen`] = false
+          this.#config[`field.${key}.editor`] = "false"
+          this.#config[`field.${key}.editorParams`] = '{}'
+          this.#config[`field.${key}.formatter`] = 'null'
+          this.#config[`field.${key}.formatterParams`] = '{}'
+          this.#config[`field.${key}.headerSort`] = true
+          this.#config[`field.${key}.headerFilter`] = 'input';
+          this.#datasetEditingFields.push(
+            ...getFieldsForConfig(key)
+          )
+        }
       }
-    }
     })
     // Object.keys(schema).
 
@@ -304,31 +325,32 @@ export class VisualizationTable extends PanelPlugin {
     .map(key => key.split('.')[1]))]
 
     metrics.forEach(metric => {
-        if (!Object.keys(schema).includes(metric)) {
-          Object.keys(this.#config)
-          .filter((key) => key.includes('field.'))
-          .forEach(optionName => {
-            if (optionName.split('.')[1] === metric) {
-              delete this.#config[optionName]
+      if (!Object.keys(schema).includes(metric)) {
+        Object.keys(this.#config)
+        .filter((key) => key.includes('field.'))
+        .forEach(optionName => {
+          if (optionName.split('.')[1] === metric) {
+            delete this.#config[optionName]
 
-             const arrayOfStartSequenceIndex = this.#datasetEditingFields.map((field, index) => {
-                if (field?.component === 'title' && field?.propValue === metric) {
-                  return index
-                }
-              })
-              arrayOfStartSequenceIndex.forEach((index) => {
-                this.#datasetEditingFields.splice(index, 7)
-              })
-            }
-          })
-        }
-      })
+            const arrayOfStartSequenceIndex = this.#datasetEditingFields.map((field, index) => {
+              if (field?.component === 'title' && field?.propValue === metric) {
+                return index
+              }
+            })
+            arrayOfStartSequenceIndex.forEach((index) => {
+              this.#datasetEditingFields.splice(index, 8)
+            })
+          }
+        })
+      }
+    })
   }
 
   addFieldsToConfig(config) {
     const metrics =[... new Set(Object.keys(config)
     .filter((key) => key.includes('field.'))
     .map(key => key.split('.')[1]))]
+
     if (
       !this.#datasetEditingFields
       .find((field) => metrics.includes(field.propValue))
@@ -342,10 +364,9 @@ export class VisualizationTable extends PanelPlugin {
         }
       })
     }
-
   }
 
-  setTableConfigOptions(config) {
+  setTableConfigOptions(config = this.#config) {
     const columnComfig = Object.keys(config)
     .filter((key) => key.includes('field.'))
     .reduce((acc, key) => {
@@ -369,6 +390,7 @@ export class VisualizationTable extends PanelPlugin {
     );
     this.loadSchema(schema);
     this.loadData(data);
+    this.setTableConfigOptions();
   }
 
   processDataSourceWriteEvent({dataSource, status}) {
@@ -377,7 +399,6 @@ export class VisualizationTable extends PanelPlugin {
     this.#logSystem.debug(
       `${this.#id} process DataSourceWriteStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
     );
-
   }
 
   getDatasetFromTable() {
@@ -394,10 +415,6 @@ export class VisualizationTable extends PanelPlugin {
         {
           component: 'title',
           propValue: 'Общие настройки',
-        },
-        {
-          component: 'title',
-          propValue: 'Источник данных',
         },
         {
           component: 'datasource',
@@ -436,12 +453,37 @@ export class VisualizationTable extends PanelPlugin {
     }
   }
 
-
-
   writeData(dataset) {
     const dsName = this.#config?.dataSource
     if (!dsName) return
     delete dataset.schema._columnOptions
     this.#dataSourceSystem.instance.runDataSourceWrite(dsName, dataset)
   }
+
+  // loadTestData() {
+  //   this.loadSchema({ _time: "BIGINT", _columnOptions: "STRING", color: "STRING", country: "STRING", bool: "BOOLEAN"});
+  //   this.loadData([
+  //     {"_time":1697791743,"_columnOptions":"{ '_time': {'title': 'Время', 'frozen': true, 'headerFilter':'input' }, 'bool': {'title': 'Bool', 'headerFilter':'input', 'formatter': 'tickCross', 'headerFilter': 'tickCross'}, 'color': {'title': 'Цвет', 'formatter': 'color', 'headerFilter':'input'}, 'country': {'title': 'Страна'}}"},
+  //     {"_time":1800000000,"color":"red","country":"United Kingdom","bool":false},
+  //     {"_time":1900000000,"color":"blue","country":"Germany","bool":false},
+  //     {"_time":2000000000,"color":"green","country":"France","bool":true},
+  //     {"_time":2100000000,"color":"#4f2599","country":"USA","bool":false},
+  //     {"_time":2200000000,"color":"#ffff00","country":"Canada","bool":false},
+  //     {"_time":2300000000,"color":"red","country":"Russia","bool":true},
+  //     {"_time":2400000000,"color":"#ffff00","country":"India","bool":false},
+  //     {"_time":2500000000,"color":"blue","country":"China","bool":false},
+  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"blue","country":"India","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+  //     {"_time":2600000000,"color":"green","country":"Japan","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"USA","bool":false},
+  //     {"_time":2600000000,"color":"red","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"#f12400","bool":false,"test2":160},
+  //     {"_time":2600000000,"color":"#ffff00","country":"South Korea","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"Canada","bool":false},
+  //     {"_time":2600000000,"color":"#ffff00","country":"China","bool":false},
+  //   ]);
+  //   this.setTableConfigOptions();
+  // }
 }
