@@ -13,6 +13,10 @@ import {
 
 import { getFieldsForConfig } from './js/columnConfigFieldTypes'
 
+import * as XLSX from 'xlsx/xlsx.mjs';
+
+window.XLSX = XLSX
+
 export class VisualizationTable extends PanelPlugin {
 
   #id;

@@ -16,7 +16,6 @@
   </div>
 </template>
 
-<script src="../js/xlsx.full.min"></script>
 <script>
 import {TabulatorFull as Tabulator} from 'tabulator-tables';
 import {throttle} from '../js/throttle';
