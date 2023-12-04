@@ -55,6 +55,11 @@ export const getFieldsForConfig = (key) => ([
       { label: 'Текст', value: null },
       { label: 'Checkbox', value: 'tickCross' },
       { label: 'Цвет', value: 'color' },
+
+      //TODO: добавить выбор графика
+      // (в данный момент можно выбрать график для не подходящих данных и словить ошибку)
+
+      // { label: 'График', value: 'chart' },
     ],
   },
   {

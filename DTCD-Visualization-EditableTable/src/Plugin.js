@@ -53,7 +53,7 @@ export class VisualizationTable extends PanelPlugin {
     this.#guid = guid;
     this.#id = `${pluginMeta.name}[${guid}]`;
     this.#logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
-    this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
+    this.#eventSystem = new EventSystemAdapter('0.6.0', guid);
     this.#eventSystem.registerPluginInstance(this, ['Clicked']);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.4.0');
@@ -145,6 +145,7 @@ export class VisualizationTable extends PanelPlugin {
   }
 
   setPluginConfig(config = {}) {
+
     this.#logSystem.debug(`Set new config to ${this.#id}`);
     this.#logSystem.info(`Set new config to ${this.#id}`);
 
@@ -195,27 +196,23 @@ export class VisualizationTable extends PanelPlugin {
         );
 
         this.#eventSystem.subscribe(
-          {
-            eventGUID: this.#dataSourceSystemGUID,
-            eventName: 'DataSourceStatusUpdate',
-            actionGUID: this.#guid,
-            actionName: 'processDataSourceEvent',
-            subscriptionType: 'system',
-          },
-          { dataSource: this.#config[prop], status: 'success' },
+          this.#dataSourceSystemGUID,
+          'DataSourceStatusUpdate',
+          this.#guid,
+          'processDataSourceEvent',
+            // subscriptionType: 'system',
+          { dataSource: dsNewName, status: 'success' },
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
 
         if (ds.type === 'otlrw') {
           this.#eventSystem.subscribe(
-            {
-              eventGUID: this.#dataSourceSystemGUID,
-              eventName: 'DataSourceWriteStatusUpdate',
-              actionGUID: this.#guid,
-              actionName: 'processDataSourceWriteEvent',
-              subscriptionType: 'system',
-            },
+            this.#dataSourceSystemGUID,
+            'DataSourceWriteStatusUpdate',
+            this.#guid,
+            'processDataSourceWriteEvent',
+              // subscriptionType: 'system',
             { dataSource: dsNewName, status: 'failed' },
           );
         }

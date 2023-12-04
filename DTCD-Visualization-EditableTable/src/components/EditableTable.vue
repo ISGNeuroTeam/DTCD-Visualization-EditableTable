@@ -138,7 +138,7 @@ export default {
             field: key,
             title: options?.title || key,
             frozen: options?.frozen || false,
-            headerFilter: options?.headerFilter == 'turned-off' ? false : true,
+            headerFilter: options?.headerFilter == 'turned-off' ? false : options.headerFilter,
             headerSort: options?.headerSort ?? true,
             editor: options?.editor || false,
             headerMenu: this.headerMenu,
@@ -165,7 +165,7 @@ export default {
           }
           if (options?.editor === "list" && options?.editorParams) {
             column.editorParams = options.editorParams
-            column.headerFilter = 'input'
+            column.headerFilter =  options?.headerFilter == 'turned-off' ? false : options.headerFilter
           }
 
           return [
@@ -254,7 +254,7 @@ export default {
             ...acc,
             {
               ...col,
-              width: tCol._column.width
+              width: tCol?._column?.width || 90
             }
           ]
         },[])
@@ -649,7 +649,11 @@ export default {
 
 
 }
+
 .tabulator-menu.tabulator-popup-container {
+  max-height: 150px;
+  overflow: auto;
+
   & > .tabulator-menu-item {
     font-family: 'Proxima Nova', sans-serif;
     color: var(--text_main)!important;
